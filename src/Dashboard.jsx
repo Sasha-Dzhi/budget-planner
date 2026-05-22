@@ -4,6 +4,7 @@ import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts'
+import Profile from './Profile'
 
 const INCOME_CATEGORIES = ['Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Other']
 const EXPENSE_CATEGORIES = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Education', 'Other']
@@ -280,10 +281,28 @@ export default function Dashboard({ session }) {
         borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column',
         padding: '20px 12px', position: 'sticky', top: 0, height: '100vh'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 8px', marginBottom: '28px' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>💰</div>
-          <span style={{ fontWeight: 700, fontSize: '15px', letterSpacing: '-0.3px' }}>Budget</span>
-        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 8px', marginBottom: '20px' }}>
+  <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>💰</div>
+  <span style={{ fontWeight: 700, fontSize: '15px', letterSpacing: '-0.3px' }}>Budget</span>
+</div>
+
+{/* Profile card in sidebar */}
+<button onClick={() => navigateTo('profile')} style={{
+  width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 10px',
+  borderRadius: '14px', border: 'none', cursor: 'pointer', marginBottom: '20px', transition: 'all .15s', textAlign: 'left',
+  background: page === 'profile' ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
+  outline: page === 'profile' ? '1px solid rgba(99,102,241,0.3)' : '1px solid rgba(255,255,255,0.06)'
+}}
+  onMouseOver={e => { if (page !== 'profile') e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+  onMouseOut={e => { if (page !== 'profile') e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}>
+  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+    {session.user.email[0].toUpperCase()}
+  </div>
+  <div style={{ overflow: 'hidden' }}>
+    <p style={{ fontSize: '13px', fontWeight: 600, color: page === 'profile' ? '#818cf8' : '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>My Profile</p>
+    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.email}</p>
+  </div>
+</button>
 
         <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '1.5px', padding: '0 8px', marginBottom: '6px' }}>Menu</p>
         {NAV.map(n => (
@@ -440,7 +459,10 @@ export default function Dashboard({ session }) {
               )}
             </div>
           )}
-
+          {/* PROFILE */}
+{page === 'profile' && (
+  <Profile session={session} transactions={transactions} filtered={filtered} period={period} currentPeriodLabel={currentPeriodLabel} />
+)}
           {/* SETTINGS */}
           {page === 'settings' && (
             <div style={{ maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
