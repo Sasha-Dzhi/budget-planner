@@ -307,7 +307,11 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
   const [category, setCategory] = useState('Food')
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-
+  const [filterType, setFilterType] = useState('all')
+  const [filterCategories, setFilterCategories] = useState([])
+  const [filterFrom, setFilterFrom] = useState('')
+  const [filterTo, setFilterTo] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
   const isMobile = useIsMobile()
   const c = getColors(darkMode)
 
@@ -371,9 +375,17 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
     })
     return Object.values(months).sort((a, b) => a.month.localeCompare(b.month))
   }
-
-  const totalTxPages = Math.ceil(filtered.length / PAGES_PER_VIEW)
-  const paginatedTx = filtered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAGES_PER_VIEW)
+const txFiltered = filtered.filter(t => {
+  if (filterType !== 'all' && t.type !== filterType) return false
+  if (filterCategories.length > 0 && !filterCategories.includes(t.category)) return false
+  if (filterFrom && t.date < filterFrom) return false
+  if (filterTo && t.date > filterTo) return false
+  return true
+})
+const isFiltered = filterType !== 'all' || filterCategories.length > 0 || filterFrom || filterTo
+const totalTxPages = Math.ceil(txFiltered.length / PAGES_PER_VIEW)
+const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAGES_PER_VIEW)
+  
   const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
   const currentPeriodLabel = PERIODS.find(p => p.key === period)?.label
 
@@ -483,25 +495,40 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
     </div>
   )
 
-  const Pagination = () => totalTxPages > 1 ? (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderTop: `1px solid ${c.dividerStrong}`, flexWrap: 'wrap', gap: '8px' }}>
+  const Pagination = () => {
+  const changePage = (n) => {
+  setTxPage(n)
+  setTimeout(() => document.getElementById('pagination')?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100)
+}
+
+  return totalTxPages > 1 ? (
+    <div id="pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderTop: `1px solid ${c.dividerStrong}`, flexWrap: 'wrap', gap: '8px' }}>
       <p style={{ fontSize: '11px', color: c.textFaint }}>
         {((txPage - 1) * PAGES_PER_VIEW) + 1}–{Math.min(txPage * PAGES_PER_VIEW, filtered.length)} of {filtered.length}
       </p>
-      <div style={{ display: 'flex', gap: '6px' }}>
-        <button onClick={() => setTxPage(p => Math.max(1, p - 1))} disabled={txPage === 1} style={{
-          padding: '6px 12px', borderRadius: '8px', border: `1px solid ${c.cardBorder}`,
+      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+        <button onClick={() => changePage(Math.max(1, txPage - 1))} disabled={txPage === 1} style={{
+          padding: '6px 10px', borderRadius: '8px', border: `1px solid ${c.cardBorder}`,
           background: c.periodBg, color: txPage === 1 ? c.textFaint : c.textMuted,
           fontSize: '12px', cursor: txPage === 1 ? 'default' : 'pointer'
-        }}>← Prev</button>
-        <button onClick={() => setTxPage(p => Math.min(totalTxPages, p + 1))} disabled={txPage === totalTxPages} style={{
-          padding: '6px 12px', borderRadius: '8px', border: `1px solid ${c.cardBorder}`,
+        }}>←</button>
+        {Array.from({ length: totalTxPages }, (_, i) => i + 1).map(n => (
+          <button key={n} onClick={() => changePage(n)} style={{
+            padding: '6px 10px', borderRadius: '8px', border: 'none', fontSize: '12px', cursor: 'pointer',
+            fontWeight: n === txPage ? 700 : 400,
+            background: n === txPage ? 'rgba(99,102,241,0.3)' : c.periodBg,
+            color: n === txPage ? '#818cf8' : c.textMuted
+          }}>{n}</button>
+        ))}
+        <button onClick={() => changePage(Math.min(totalTxPages, txPage + 1))} disabled={txPage === totalTxPages} style={{
+          padding: '6px 10px', borderRadius: '8px', border: `1px solid ${c.cardBorder}`,
           background: c.periodBg, color: txPage === totalTxPages ? c.textFaint : c.textMuted,
           fontSize: '12px', cursor: txPage === totalTxPages ? 'default' : 'pointer'
-        }}>Next →</button>
+        }}>→</button>
       </div>
     </div>
   ) : null
+}
 
   const AddButton = () => (
     <button onClick={() => setShowForm(!showForm)} style={{
@@ -665,10 +692,68 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
               <AddButton />
               {showForm && <AddForm type={type} setType={setType} amount={amount} setAmount={setAmount} category={category} setCategory={setCategory} categories={categories} description={description} setDescription={setDescription} date={date} setDate={setDate} onSubmit={addTransaction} c={c} darkMode={darkMode} />}
               <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', overflow: 'hidden' }}>
-                <div style={{ padding: '14px 16px', borderBottom: `1px solid ${c.dividerStrong}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>All · {currentPeriodLabel}</p>
-                  <p style={{ fontSize: '11px', color: c.textFaint }}>{filtered.length} total</p>
-                </div>
+                <div style={{ padding: '14px 16px', borderBottom: `1px solid ${c.dividerStrong}` }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showFilters ? '12px' : 0 }}>
+    <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>All · {currentPeriodLabel}</p>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <p style={{ fontSize: '11px', color: c.textFaint }}>{txFiltered.length} total</p>
+      <button onClick={() => setShowFilters(!showFilters)} style={{
+        padding: '5px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
+        background: isFiltered ? 'rgba(99,102,241,0.2)' : c.periodBg,
+        color: isFiltered ? '#818cf8' : c.textMuted,
+        outline: isFiltered ? '1px solid rgba(99,102,241,0.4)' : 'none'
+      }}>
+        {isFiltered ? '🔵 Filters on' : '⚙️ Filter'}
+      </button>
+      {isFiltered && (
+        <button onClick={() => { setFilterType('all'); setFilterCategories([]); setFilterFrom(''); setFilterTo('') }} style={{
+          padding: '5px 10px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '12px',
+          background: 'rgba(248,113,113,0.1)', color: '#f87171'
+        }}>Clear</button>
+      )}
+    </div>
+  </div>
+
+  {showFilters && (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        {['all', 'income', 'expense'].map(t => (
+          <button key={t} onClick={() => { setFilterType(t); setTxPage(1) }} style={{
+            padding: '5px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 500, textTransform: 'capitalize',
+            background: filterType === t ? 'rgba(99,102,241,0.2)' : c.periodBg,
+            color: filterType === t ? '#818cf8' : c.textMuted,
+            outline: filterType === t ? '1px solid rgba(99,102,241,0.4)' : 'none'
+          }}>{t === 'all' ? 'All types' : t}</button>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+  {[...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES].filter((v, i, a) => a.indexOf(v) === i).map(cat => (
+    <button key={cat} onClick={() => {
+      setFilterCategories(prev =>
+        prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+      )
+      setTxPage(1)
+    }} style={{
+      padding: '5px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 500,
+      background: filterCategories.includes(cat) ? 'rgba(99,102,241,0.2)' : c.periodBg,
+      color: filterCategories.includes(cat) ? '#818cf8' : c.textMuted,
+      outline: filterCategories.includes(cat) ? '1px solid rgba(99,102,241,0.4)' : 'none'
+    }}>{CATEGORY_ICONS[cat]} {cat}</button>
+  ))}
+</div>
+      
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <input type="date" value={filterFrom} onChange={e => { setFilterFrom(e.target.value); setTxPage(1) }}
+  lang="en"
+  style={{ padding: '6px 10px', borderRadius: '10px', border: `1px solid ${c.inputBorder}`, background: c.inputBg, color: c.inputText, fontSize: '12px', outline: 'none', colorScheme: darkMode ? 'dark' : 'light' }} />
+        <span style={{ color: c.textFaint, alignSelf: 'center', fontSize: '12px' }}>to</span>
+        <input type="date" value={filterTo} onChange={e => { setFilterTo(e.target.value); setTxPage(1) }}
+  lang="en"
+  style={{ padding: '6px 10px', borderRadius: '10px', border: `1px solid ${c.inputBorder}`, background: c.inputBg, color: c.inputText, fontSize: '12px', outline: 'none', colorScheme: darkMode ? 'dark' : 'light' }} />
+      </div>
+    </div>
+  )}
+</div>
                 {filtered.length === 0 && <EmptyState />}
                 {paginatedTx.map((t, i) => (
                   <TxRow key={t.id} t={t} last={i === paginatedTx.length - 1} />
