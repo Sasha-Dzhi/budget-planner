@@ -140,7 +140,64 @@ const getColors = (dark) => dark ? {
   formBg: '#fff',
   formBorder: 'rgba(0,0,0,0.07)',
 }
+const relativeDate = (dateStr) => {
+  const days = Math.floor((new Date() - new Date(dateStr)) / (1000 * 60 * 60 * 24))
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return `${days} days ago`
+  if (days < 30) return `${Math.floor(days / 7)}w ago`
+  return dateStr
+}
+const TopCategories = ({ filtered, c }) => {
+  const totals = {}
+  filtered.filter(t => t.type === 'expense').forEach(t => {
+    totals[t.category] = (totals[t.category] || 0) + t.amount
+  })
+  const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 4)
+  const max = sorted[0]?.[1] || 1
 
+  if (sorted.length === 0) return null
+
+  return (
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Top spending</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {sorted.map(([cat, amount]) => (
+          <div key={cat}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+              <span style={{ fontSize: '12px', color: c.text }}>{CATEGORY_ICONS[cat]} {cat}</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#f87171' }}>€{amount.toFixed(2)}</span>
+            </div>
+            <div style={{ height: '5px', background: c.statBg, borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${(amount / max) * 100}%`, background: 'linear-gradient(90deg, #f87171, #f472b6)', borderRadius: '3px', transition: 'width .5s ease' }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+const SpendingProgress = ({ filtered, c }) => {
+  const income = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const expenses = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  if (income === 0) return null
+  const pct = Math.min((expenses / income) * 100, 100).toFixed(0)
+  const color = pct < 50 ? '#34d399' : pct < 80 ? '#fbbf24' : '#f87171'
+  const label = pct < 50 ? '✅ Spending is under control' : pct < 80 ? '⚠️ Getting close' : '🔴 Spending most of income'
+
+  return (
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>Monthly budget used</p>
+        <p style={{ fontSize: '12px', fontWeight: 700, color }}>{pct}%</p>
+      </div>
+      <div style={{ height: '8px', background: c.statBg, borderRadius: '4px', overflow: 'hidden', marginBottom: '8px' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '4px', transition: 'width .5s ease' }} />
+      </div>
+      <p style={{ fontSize: '11px', color: c.textFaint }}>{label} · €{expenses.toFixed(2)} of €{income.toFixed(2)}</p>
+    </div>
+  )
+}
 export default function Dashboard({ session, darkMode, toggleDarkMode }) {
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -313,7 +370,7 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
         </div>
         <div style={{ minWidth: 0 }}>
           <p style={{ fontSize: '13px', fontWeight: 600, color: c.text, marginBottom: '2px' }}>{t.category}</p>
-          <p style={{ fontSize: '11px', color: c.textSubtle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.description && `${t.description} · `}{t.date}</p>
+          <p style={{ fontSize: '11px', color: c.textSubtle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.description && `${t.description} · `}{relativeDate(t.date)}</p>
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -499,6 +556,8 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
               <StatCards />
               <AddButton />
               {showForm && <AddForm />}
+              <SpendingProgress filtered={filtered} c={c} />
+              <TopCategories filtered={filtered} c={c} />
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                   <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>
