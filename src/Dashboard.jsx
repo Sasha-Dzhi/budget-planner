@@ -55,11 +55,21 @@ const getPeriodRange = (period) => {
   }
 }
 
-// AddForm is outside Dashboard so it never loses focus on re-render
+// Responsive hook
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isMobile
+}
+
 const AddForm = ({ type, setType, amount, setAmount, category, setCategory, categories, description, setDescription, date, setDate, onSubmit }) => {
   const inputClass = "w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
   return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '24px' }}>
+    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '20px' }}>
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
         {['expense', 'income'].map(t => (
           <button key={t} type="button" onClick={() => setType(t)} style={{
@@ -94,24 +104,24 @@ const AddForm = ({ type, setType, amount, setAmount, category, setCategory, cate
 const TxRow = ({ t, last, onDelete }) => (
   <div style={{
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '13px 20px', borderBottom: !last ? '1px solid rgba(255,255,255,0.04)' : 'none', transition: 'background .15s'
+    padding: '13px 16px', borderBottom: !last ? '1px solid rgba(255,255,255,0.04)' : 'none', transition: 'background .15s'
   }}
     onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
     onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+      <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>
         {CATEGORY_ICONS[t.category] || '📌'}
       </div>
-      <div>
+      <div style={{ minWidth: 0 }}>
         <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '2px' }}>{t.category}</p>
-        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>{t.description && `${t.description} · `}{t.date}</p>
+        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.description && `${t.description} · `}{t.date}</p>
       </div>
     </div>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-      <p style={{ fontSize: '14px', fontWeight: 700, color: t.type === 'income' ? '#34d399' : '#f87171' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+      <p style={{ fontSize: '13px', fontWeight: 700, color: t.type === 'income' ? '#34d399' : '#f87171' }}>
         {t.type === 'income' ? '+' : '-'}€{t.amount.toFixed(2)}
       </p>
-      <button onClick={() => onDelete(t.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.15)', fontSize: '18px', lineHeight: 1, padding: '0 4px', transition: 'color .15s' }}
+      <button onClick={() => onDelete(t.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.15)', fontSize: '18px', lineHeight: 1, padding: '0 2px', transition: 'color .15s' }}
         onMouseOver={e => e.target.style.color = '#f87171'}
         onMouseOut={e => e.target.style.color = 'rgba(255,255,255,0.15)'}>×</button>
     </div>
@@ -132,9 +142,14 @@ export default function Dashboard({ session }) {
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
 
+  const isMobile = useIsMobile()
+
   useEffect(() => { fetchTransactions() }, [])
   useEffect(() => { setCategory(type === 'income' ? 'Salary' : 'Food') }, [type])
   useEffect(() => { setTxPage(1) }, [period, page])
+
+  // Close sidebar when switching to desktop
+  useEffect(() => { if (!isMobile) setSidebarOpen(false) }, [isMobile])
 
   const fetchTransactions = async () => {
     const { data } = await supabase.from('transactions').select('*').order('date', { ascending: false })
@@ -196,8 +211,8 @@ export default function Dashboard({ session }) {
     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
       {PERIODS.map(p => (
         <button key={p.key} onClick={() => setPeriod(p.key)} style={{
-          padding: '6px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer',
-          fontSize: '12px', fontWeight: 500, transition: 'all .15s',
+          padding: '6px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer',
+          fontSize: '11px', fontWeight: 500, transition: 'all .15s',
           background: period === p.key ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)',
           color: period === p.key ? '#818cf8' : 'rgba(255,255,255,0.35)',
           outline: period === p.key ? '1px solid rgba(99,102,241,0.4)' : '1px solid transparent'
@@ -206,19 +221,20 @@ export default function Dashboard({ session }) {
     </div>
   )
 
+  // Responsive stat cards: 1 column on mobile, 3 on desktop
   const StatCards = () => (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '20px' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Balance</p>
-        <p style={{ fontSize: '24px', fontWeight: 800, color: balance >= 0 ? '#fff' : '#f87171', letterSpacing: '-1px' }}>€{balance.toFixed(2)}</p>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '10px' }}>
+      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
+        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Balance</p>
+        <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: balance >= 0 ? '#fff' : '#f87171', letterSpacing: '-1px' }}>€{balance.toFixed(2)}</p>
       </div>
-      <div style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: '16px', padding: '20px' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(52,211,153,0.6)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Income</p>
-        <p style={{ fontSize: '24px', fontWeight: 800, color: '#34d399', letterSpacing: '-1px' }}>€{totalIncome.toFixed(2)}</p>
+      <div style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
+        <p style={{ fontSize: '10px', color: 'rgba(52,211,153,0.6)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Income</p>
+        <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: '#34d399', letterSpacing: '-1px' }}>€{totalIncome.toFixed(2)}</p>
       </div>
-      <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.15)', borderRadius: '16px', padding: '20px' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(248,113,113,0.6)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Expenses</p>
-        <p style={{ fontSize: '24px', fontWeight: 800, color: '#f87171', letterSpacing: '-1px' }}>€{totalExpenses.toFixed(2)}</p>
+      <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.15)', borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
+        <p style={{ fontSize: '10px', color: 'rgba(248,113,113,0.6)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Expenses</p>
+        <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: '#f87171', letterSpacing: '-1px' }}>€{totalExpenses.toFixed(2)}</p>
       </div>
     </div>
   )
@@ -231,26 +247,18 @@ export default function Dashboard({ session }) {
   )
 
   const Pagination = () => totalTxPages > 1 ? (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap', gap: '8px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap', gap: '8px' }}>
       <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>
-        Showing {((txPage - 1) * PAGES_PER_VIEW) + 1}–{Math.min(txPage * PAGES_PER_VIEW, filtered.length)} of {filtered.length}
+        {((txPage - 1) * PAGES_PER_VIEW) + 1}–{Math.min(txPage * PAGES_PER_VIEW, filtered.length)} of {filtered.length}
       </p>
       <div style={{ display: 'flex', gap: '6px' }}>
         <button onClick={() => setTxPage(p => Math.max(1, p - 1))} disabled={txPage === 1} style={{
-          padding: '6px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)',
+          padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)',
           background: 'rgba(255,255,255,0.04)', color: txPage === 1 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)',
           fontSize: '12px', cursor: txPage === 1 ? 'default' : 'pointer'
         }}>← Prev</button>
-        {Array.from({ length: totalTxPages }, (_, i) => i + 1).map(n => (
-          <button key={n} onClick={() => setTxPage(n)} style={{
-            padding: '6px 12px', borderRadius: '8px', border: 'none', fontSize: '12px', cursor: 'pointer',
-            fontWeight: n === txPage ? 700 : 400,
-            background: n === txPage ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.04)',
-            color: n === txPage ? '#818cf8' : 'rgba(255,255,255,0.4)'
-          }}>{n}</button>
-        ))}
         <button onClick={() => setTxPage(p => Math.min(totalTxPages, p + 1))} disabled={txPage === totalTxPages} style={{
-          padding: '6px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)',
+          padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)',
           background: 'rgba(255,255,255,0.04)', color: txPage === totalTxPages ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)',
           fontSize: '12px', cursor: txPage === totalTxPages ? 'default' : 'pointer'
         }}>Next →</button>
@@ -267,90 +275,137 @@ export default function Dashboard({ session }) {
     }}>{showForm ? 'Cancel' : '+ Add Transaction'}</button>
   )
 
+  // Mobile bottom nav
+  const BottomNav = () => (
+    <div style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+      background: 'rgba(8,8,16,0.95)', backdropFilter: 'blur(12px)',
+      borderTop: '1px solid rgba(255,255,255,0.08)',
+      display: 'flex', padding: '8px 0 max(8px, env(safe-area-inset-bottom))'
+    }}>
+      {NAV.map(n => (
+        <button key={n.key} onClick={() => navigateTo(n.key)} style={{
+          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
+          background: 'none', border: 'none', cursor: 'pointer', padding: '6px 4px'
+        }}>
+          <span style={{ fontSize: '20px', lineHeight: 1 }}>{n.icon}</span>
+          <span style={{ fontSize: '10px', fontWeight: 500, color: page === n.key ? '#818cf8' : 'rgba(255,255,255,0.3)' }}>{n.label}</span>
+        </button>
+      ))}
+      <button onClick={() => navigateTo('profile')} style={{
+        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
+        background: 'none', border: 'none', cursor: 'pointer', padding: '6px 4px'
+      }}>
+        <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#fff' }}>
+          {session.user.email[0].toUpperCase()}
+        </div>
+        <span style={{ fontSize: '10px', fontWeight: 500, color: page === 'profile' ? '#818cf8' : 'rgba(255,255,255,0.3)' }}>Profile</span>
+      </button>
+    </div>
+  )
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#080810', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 40 }} />
-      )}
+      {/* Desktop Sidebar — hidden on mobile */}
+      {!isMobile && (
+        <div style={{
+          width: '220px', flexShrink: 0, background: 'rgba(255,255,255,0.02)',
+          borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column',
+          padding: '20px 12px', position: 'sticky', top: 0, height: '100vh'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 8px', marginBottom: '20px' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>💰</div>
+            <span style={{ fontWeight: 700, fontSize: '15px', letterSpacing: '-0.3px' }}>Budget</span>
+          </div>
 
-      {/* Sidebar */}
-      <div style={{
-        width: '220px', flexShrink: 0, background: 'rgba(255,255,255,0.02)',
-        borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column',
-        padding: '20px 12px', position: 'sticky', top: 0, height: '100vh'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 8px', marginBottom: '20px' }}>
-  <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>💰</div>
-  <span style={{ fontWeight: 700, fontSize: '15px', letterSpacing: '-0.3px' }}>Budget</span>
-</div>
-
-{/* Profile card in sidebar */}
-<button onClick={() => navigateTo('profile')} style={{
-  width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 10px',
-  borderRadius: '14px', border: 'none', cursor: 'pointer', marginBottom: '20px', transition: 'all .15s', textAlign: 'left',
-  background: page === 'profile' ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
-  outline: page === 'profile' ? '1px solid rgba(99,102,241,0.3)' : '1px solid rgba(255,255,255,0.06)'
-}}
-  onMouseOver={e => { if (page !== 'profile') e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
-  onMouseOut={e => { if (page !== 'profile') e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}>
-  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-    {session.user.email[0].toUpperCase()}
-  </div>
-  <div style={{ overflow: 'hidden' }}>
-    <p style={{ fontSize: '13px', fontWeight: 600, color: page === 'profile' ? '#818cf8' : '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>My Profile</p>
-    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.email}</p>
-  </div>
-</button>
-
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '1.5px', padding: '0 8px', marginBottom: '6px' }}>Menu</p>
-        {NAV.map(n => (
-          <button key={n.key} onClick={() => navigateTo(n.key)} style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 10px',
-            borderRadius: '10px', border: 'none', cursor: 'pointer', marginBottom: '2px',
-            transition: 'all .15s', textAlign: 'left',
-            background: page === n.key ? 'rgba(99,102,241,0.15)' : 'transparent',
-          }}
-            onMouseOver={e => { if (page !== n.key) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-            onMouseOut={e => { if (page !== n.key) e.currentTarget.style.background = 'transparent' }}>
-            <span style={{ fontSize: '16px', width: '20px', textAlign: 'center' }}>{n.icon}</span>
-            <span style={{ fontSize: '13px', fontWeight: 500, color: page === n.key ? '#818cf8' : 'rgba(255,255,255,0.45)' }}>{n.label}</span>
-          </button>
-        ))}
-
-        <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', marginBottom: '4px' }}>
-            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>
+          <button onClick={() => navigateTo('profile')} style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px',
+            borderRadius: '14px', border: 'none', cursor: 'pointer', marginBottom: '20px', transition: 'all .15s', textAlign: 'left',
+            background: page === 'profile' ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
+            outline: page === 'profile' ? '1px solid rgba(99,102,241,0.3)' : '1px solid rgba(255,255,255,0.06)'
+          }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
               {session.user.email[0].toUpperCase()}
             </div>
-            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{session.user.email}</p>
-          </div>
-          <button onClick={() => supabase.auth.signOut()} style={{
-            width: '100%', padding: '8px 10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-            fontSize: '12px', fontWeight: 500, background: 'rgba(248,113,113,0.08)', color: '#f87171', textAlign: 'left', transition: 'background .15s'
-          }}
-            onMouseOver={e => e.currentTarget.style.background = 'rgba(248,113,113,0.15)'}
-            onMouseOut={e => e.currentTarget.style.background = 'rgba(248,113,113,0.08)'}>
-            Log out
+            <div style={{ overflow: 'hidden' }}>
+              <p style={{ fontSize: '13px', fontWeight: 600, color: page === 'profile' ? '#818cf8' : '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>My Profile</p>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.email}</p>
+            </div>
           </button>
-        </div>
-      </div>
 
-      {/* Main */}
+          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '1.5px', padding: '0 8px', marginBottom: '6px' }}>Menu</p>
+          {NAV.map(n => (
+            <button key={n.key} onClick={() => navigateTo(n.key)} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 10px',
+              borderRadius: '10px', border: 'none', cursor: 'pointer', marginBottom: '2px',
+              transition: 'all .15s', textAlign: 'left',
+              background: page === n.key ? 'rgba(99,102,241,0.15)' : 'transparent',
+            }}
+              onMouseOver={e => { if (page !== n.key) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+              onMouseOut={e => { if (page !== n.key) e.currentTarget.style.background = 'transparent' }}>
+              <span style={{ fontSize: '16px', width: '20px', textAlign: 'center' }}>{n.icon}</span>
+              <span style={{ fontSize: '13px', fontWeight: 500, color: page === n.key ? '#818cf8' : 'rgba(255,255,255,0.45)' }}>{n.label}</span>
+            </button>
+          ))}
+
+          <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', marginBottom: '4px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>
+                {session.user.email[0].toUpperCase()}
+              </div>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{session.user.email}</p>
+            </div>
+            <button onClick={() => supabase.auth.signOut()} style={{
+              width: '100%', padding: '8px 10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+              fontSize: '12px', fontWeight: 500, background: 'rgba(248,113,113,0.08)', color: '#f87171', textAlign: 'left', transition: 'background .15s'
+            }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(248,113,113,0.15)'}
+              onMouseOut={e => e.currentTarget.style.background = 'rgba(248,113,113,0.08)'}>
+              Log out
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main content */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <div style={{ padding: '16px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-          <h1 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
-            {NAV.find(n => n.key === page)?.label}
-          </h1>
-          {page !== 'settings' && <PeriodSelector />}
+
+        {/* Top header */}
+        <div style={{
+          padding: isMobile ? '12px 16px' : '16px 32px',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+          position: 'sticky', top: 0, zIndex: 30, background: 'rgba(8,8,16,0.9)', backdropFilter: 'blur(12px)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {isMobile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>💰</div>
+                <span style={{ fontWeight: 700, fontSize: '14px' }}>Budget</span>
+              </div>
+            )}
+            <h1 style={{ fontSize: isMobile ? '15px' : '18px', fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
+              {isMobile ? '' : (NAV.find(n => n.key === page)?.label || 'Profile')}
+            </h1>
+          </div>
+          {page !== 'settings' && (
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <PeriodSelector />
+            </div>
+          )}
         </div>
 
-        <div style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
+        {/* Page content */}
+        <div style={{
+          flex: 1, padding: isMobile ? '16px 12px' : '32px',
+          overflowY: 'auto',
+          paddingBottom: isMobile ? '90px' : '32px' // space for bottom nav on mobile
+        }}>
 
           {/* DASHBOARD */}
           {page === 'dashboard' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <StatCards />
               <AddButton />
               {showForm && (
@@ -365,7 +420,7 @@ export default function Dashboard({ session }) {
                 />
               )}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                   <p style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>
                     Recent · {currentPeriodLabel}
                   </p>
@@ -386,7 +441,7 @@ export default function Dashboard({ session }) {
 
           {/* TRANSACTIONS */}
           {page === 'transactions' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <StatCards />
               <AddButton />
               {showForm && (
@@ -401,9 +456,9 @@ export default function Dashboard({ session }) {
                 />
               )}
               <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', overflow: 'hidden' }}>
-                <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <p style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    All transactions · {currentPeriodLabel}
+                    All · {currentPeriodLabel}
                   </p>
                   <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>{filtered.length} total</p>
                 </div>
@@ -421,16 +476,17 @@ export default function Dashboard({ session }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {filtered.length === 0 ? <EmptyState /> : (
                 <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  {/* Pie charts: stacked on mobile, side by side on desktop */}
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px' }}>
                     {[{ title: 'Expenses by category', data: expenseByCategory }, { title: 'Income by category', data: incomeByCategory }].map(({ title, data }) => (
                       <div key={title} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '20px' }}>
                         <p style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>{title}</p>
                         {data.length === 0 ? (
                           <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', padding: '32px 0', fontSize: '12px' }}>No data yet.</p>
                         ) : (
-                          <ResponsiveContainer width="100%" height={220}>
+                          <ResponsiveContainer width="100%" height={200}>
                             <PieChart>
-                              <Pie data={data} cx="50%" cy="45%" outerRadius={70} dataKey="value">
+                              <Pie data={data} cx="50%" cy="45%" outerRadius={65} dataKey="value">
                                 {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                               </Pie>
                               <Tooltip contentStyle={tooltipStyle} formatter={(v) => `€${v.toFixed(2)}`} />
@@ -443,11 +499,11 @@ export default function Dashboard({ session }) {
                   </div>
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '20px' }}>
                     <p style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Monthly overview</p>
-                    <ResponsiveContainer width="100%" height={240}>
+                    <ResponsiveContainer width="100%" height={220}>
                       <BarChart data={monthlyData()} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.3)' }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.3)' }} axisLine={false} tickLine={false} />
+                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)' }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)' }} axisLine={false} tickLine={false} />
                         <Tooltip contentStyle={tooltipStyle} formatter={(v) => `€${v.toFixed(2)}`} />
                         <Legend wrapperStyle={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }} />
                         <Bar dataKey="income" fill="#34d399" radius={[6, 6, 0, 0]} name="Income" />
@@ -459,10 +515,12 @@ export default function Dashboard({ session }) {
               )}
             </div>
           )}
+
           {/* PROFILE */}
-{page === 'profile' && (
-  <Profile session={session} transactions={transactions} filtered={filtered} period={period} currentPeriodLabel={currentPeriodLabel} />
-)}
+          {page === 'profile' && (
+            <Profile session={session} transactions={transactions} filtered={filtered} period={period} currentPeriodLabel={currentPeriodLabel} />
+          )}
+
           {/* SETTINGS */}
           {page === 'settings' && (
             <div style={{ maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -517,6 +575,9 @@ export default function Dashboard({ session }) {
           )}
         </div>
       </div>
+
+      {/* Mobile bottom navigation */}
+      {isMobile && <BottomNav />}
     </div>
   )
 }
