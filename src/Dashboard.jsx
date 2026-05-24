@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line
 } from 'recharts'
 import Profile from './Profile'
+
 
 const INCOME_CATEGORIES = ['Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Other']
 const EXPENSE_CATEGORIES = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Education', 'Other']
@@ -140,6 +141,7 @@ const getColors = (dark) => dark ? {
   formBg: '#fff',
   formBorder: 'rgba(0,0,0,0.07)',
 }
+
 const relativeDate = (dateStr) => {
   const days = Math.floor((new Date() - new Date(dateStr)) / (1000 * 60 * 60 * 24))
   if (days === 0) return 'Today'
@@ -148,35 +150,66 @@ const relativeDate = (dateStr) => {
   if (days < 30) return `${Math.floor(days / 7)}w ago`
   return dateStr
 }
-const TopCategories = ({ filtered, c }) => {
-  const totals = {}
-  filtered.filter(t => t.type === 'expense').forEach(t => {
-    totals[t.category] = (totals[t.category] || 0) + t.amount
-  })
-  const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 4)
-  const max = sorted[0]?.[1] || 1
 
-  if (sorted.length === 0) return null
+const TopCategories = ({ filtered, c }) => {
+  const expenseTotals = {}
+  filtered.filter(t => t.type === 'expense').forEach(t => {
+    expenseTotals[t.category] = (expenseTotals[t.category] || 0) + t.amount
+  })
+  const sortedExpenses = Object.entries(expenseTotals).sort((a, b) => b[1] - a[1]).slice(0, 4)
+  const maxExpense = sortedExpenses[0]?.[1] || 1
+
+  const incomeTotals = {}
+  filtered.filter(t => t.type === 'income').forEach(t => {
+    incomeTotals[t.category] = (incomeTotals[t.category] || 0) + t.amount
+  })
+  const sortedIncome = Object.entries(incomeTotals).sort((a, b) => b[1] - a[1]).slice(0, 4)
+  const maxIncome = sortedIncome[0]?.[1] || 1
+
+  if (sortedExpenses.length === 0 && sortedIncome.length === 0) return null
 
   return (
-    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
-      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Top spending</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {sorted.map(([cat, amount]) => (
-          <div key={cat}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-              <span style={{ fontSize: '12px', color: c.text }}>{CATEGORY_ICONS[cat]} {cat}</span>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#f87171' }}>€{amount.toFixed(2)}</span>
-            </div>
-            <div style={{ height: '5px', background: c.statBg, borderRadius: '3px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${(amount / max) * 100}%`, background: 'linear-gradient(90deg, #f87171, #f472b6)', borderRadius: '3px', transition: 'width .5s ease' }} />
-            </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {sortedExpenses.length > 0 && (
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
+          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Top spending</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {sortedExpenses.map(([cat, amount]) => (
+              <div key={cat}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <span style={{ fontSize: '12px', color: c.text }}>{CATEGORY_ICONS[cat]} {cat}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#f87171' }}>€{amount.toFixed(2)}</span>
+                </div>
+                <div style={{ height: '5px', background: c.statBg, borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${(amount / maxExpense) * 100}%`, background: 'linear-gradient(90deg, #f87171, #f472b6)', borderRadius: '3px', transition: 'width .5s ease' }} />
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+      {sortedIncome.length > 0 && (
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
+          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Top income</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {sortedIncome.map(([cat, amount]) => (
+              <div key={cat}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <span style={{ fontSize: '12px', color: c.text }}>{CATEGORY_ICONS[cat]} {cat}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#34d399' }}>€{amount.toFixed(2)}</span>
+                </div>
+                <div style={{ height: '5px', background: c.statBg, borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${(amount / maxIncome) * 100}%`, background: 'linear-gradient(90deg, #34d399, #10b981)', borderRadius: '3px', transition: 'width .5s ease' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
 const SpendingProgress = ({ filtered, c }) => {
   const income = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const expenses = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
@@ -184,7 +217,6 @@ const SpendingProgress = ({ filtered, c }) => {
   const pct = Math.min((expenses / income) * 100, 100).toFixed(0)
   const color = pct < 50 ? '#34d399' : pct < 80 ? '#fbbf24' : '#f87171'
   const label = pct < 50 ? '✅ Spending is under control' : pct < 80 ? '⚠️ Getting close' : '🔴 Spending most of income'
-
   return (
     <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -195,6 +227,71 @@ const SpendingProgress = ({ filtered, c }) => {
         <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '4px', transition: 'width .5s ease' }} />
       </div>
       <p style={{ fontSize: '11px', color: c.textFaint }}>{label} · €{expenses.toFixed(2)} of €{income.toFixed(2)}</p>
+    </div>
+  )
+}
+
+const AddForm = ({ type, setType, amount, setAmount, category, setCategory, categories, description, setDescription, date, setDate, onSubmit, c, darkMode }) => (
+  <div style={{ background: c.formBg, border: `1px solid ${c.formBorder}`, borderRadius: '20px', padding: '20px' }}>
+    <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+      {['expense', 'income'].map(t => (
+        <button key={t} type="button" onClick={() => setType(t)} style={{
+          flex: 1, padding: '10px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+          fontSize: '13px', fontWeight: 600, textTransform: 'capitalize', transition: 'all .15s',
+          background: type === t ? (t === 'expense' ? 'rgba(248,113,113,0.15)' : 'rgba(52,211,153,0.15)') : c.periodBg,
+          color: type === t ? (t === 'expense' ? '#f87171' : '#34d399') : c.textSubtle,
+          outline: type === t ? (t === 'expense' ? '1px solid rgba(248,113,113,0.3)' : '1px solid rgba(52,211,153,0.3)') : '1px solid transparent'
+        }}>{t}</button>
+      ))}
+    </div>
+    <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <input type="number" placeholder="Amount (€)" value={amount}
+        onChange={e => setAmount(e.target.value)} required min="0" step="0.01"
+        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: `1px solid ${c.inputBorder}`, background: c.inputBg, color: c.inputText, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+      <select value={category} onChange={e => setCategory(e.target.value)}
+        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: `1px solid ${c.inputBorder}`, background: c.inputBg, color: c.inputText, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}>
+        {categories.map(cat => <option key={cat} value={cat} style={{ background: c.inputBg }}>{CATEGORY_ICONS[cat]} {cat}</option>)}
+      </select>
+      <input type="text" placeholder="Description (optional)" value={description}
+        onChange={e => setDescription(e.target.value)}
+        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: `1px solid ${c.inputBorder}`, background: c.inputBg, color: c.inputText, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+      <input type="date" value={date} onChange={e => setDate(e.target.value)}
+        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: `1px solid ${c.inputBorder}`, background: c.inputBg, color: c.inputText, fontSize: '14px', outline: 'none', boxSizing: 'border-box', colorScheme: darkMode ? 'dark' : 'light' }} />
+      <button type="submit" style={{
+        padding: '13px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+        fontSize: '14px', fontWeight: 600, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff'
+      }}>Save Transaction</button>
+    </form>
+  </div>
+)
+const MiniTrendChart = ({ transactions, c }) => {
+  const months = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date()
+    d.setMonth(d.getMonth() - i)
+    const key = d.toISOString().slice(0, 7)
+    const label = d.toLocaleString('en-US', { month: 'short' })
+    const income = transactions.filter(t => t.date.startsWith(key) && t.type === 'income').reduce((s, t) => s + t.amount, 0)
+    const expenses = transactions.filter(t => t.date.startsWith(key) && t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+    months.push({ label, income, expenses })
+  }
+
+  const hasData = months.some(m => m.income > 0 || m.expenses > 0)
+  if (!hasData) return null
+
+  return (
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>6-month trend</p>
+      <ResponsiveContainer width="100%" height={120}>
+        <LineChart data={months} margin={{ top: 4, right: 4, left: -30, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={c.divider} />
+          <XAxis dataKey="label" tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} />
+          <Tooltip contentStyle={{ backgroundColor: c.tooltipBg, border: `1px solid ${c.cardBorder}`, borderRadius: '12px', color: c.text, fontSize: '12px' }} formatter={(v) => `€${v.toFixed(2)}`} />
+          <Line type="monotone" dataKey="income" stroke="#34d399" strokeWidth={2} dot={{ r: 3, fill: '#34d399' }} name="Income" />
+          <Line type="monotone" dataKey="expenses" stroke="#f87171" strokeWidth={2} dot={{ r: 3, fill: '#f87171' }} name="Expenses" />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   )
 }
@@ -306,56 +403,51 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
     </div>
   )
 
-  const StatCards = () => (
-    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '10px' }}>
-      <div style={{ background: c.statBg, border: `1px solid ${c.statBorder}`, borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
-        <p style={{ fontSize: '10px', color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Balance</p>
-        <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: balance >= 0 ? c.text : '#f87171', letterSpacing: '-1px' }}>€{balance.toFixed(2)}</p>
-      </div>
-      <div style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(52,211,153,0.7)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Income</p>
-        <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: '#34d399', letterSpacing: '-1px' }}>€{totalIncome.toFixed(2)}</p>
-      </div>
-      <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.15)', borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
-        <p style={{ fontSize: '10px', color: 'rgba(248,113,113,0.7)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Expenses</p>
-        <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: '#f87171', letterSpacing: '-1px' }}>€{totalExpenses.toFixed(2)}</p>
-      </div>
-    </div>
-  )
+  const StatCards = () => {
+    const lastMonthRange = getPeriodRange('last_month')
+    const lastMonth = transactions.filter(t => {
+      const d = new Date(t.date)
+      return d >= lastMonthRange.start && d <= lastMonthRange.end
+    })
+    const lastIncome = lastMonth.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+    const lastExpenses = lastMonth.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+    const lastBalance = lastIncome - lastExpenses
 
-  const AddForm = () => (
-    <div style={{ background: c.formBg, border: `1px solid ${c.formBorder}`, borderRadius: '20px', padding: '20px' }}>
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-        {['expense', 'income'].map(t => (
-          <button key={t} type="button" onClick={() => setType(t)} style={{
-            flex: 1, padding: '10px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-            fontSize: '13px', fontWeight: 600, textTransform: 'capitalize', transition: 'all .15s',
-            background: type === t ? (t === 'expense' ? 'rgba(248,113,113,0.15)' : 'rgba(52,211,153,0.15)') : c.periodBg,
-            color: type === t ? (t === 'expense' ? '#f87171' : '#34d399') : c.textSubtle,
-            outline: type === t ? (t === 'expense' ? '1px solid rgba(248,113,113,0.3)' : '1px solid rgba(52,211,153,0.3)') : '1px solid transparent'
-          }}>{t}</button>
-        ))}
+    const Trend = ({ current, previous, invert }) => {
+      if (previous === 0 && current === 0) return null
+      if (previous === 0) return null
+      const diff = current - previous
+      if (diff === 0) return null
+      const pct = ((diff / previous) * 100).toFixed(0)
+      const up = diff > 0
+      const positive = invert ? !up : up
+      return (
+        <p style={{ fontSize: '11px', marginTop: '4px', color: positive ? '#34d399' : '#f87171' }}>
+          {up ? '↑' : '↓'} {Math.abs(pct)}% vs last month
+        </p>
+      )
+    }
+
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '10px' }}>
+        <div style={{ background: c.statBg, border: `1px solid ${c.statBorder}`, borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
+          <p style={{ fontSize: '10px', color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Balance</p>
+          <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: balance >= 0 ? c.text : '#f87171', letterSpacing: '-1px' }}>€{balance.toFixed(2)}</p>
+          <Trend current={balance} previous={lastBalance} invert={false} />
+        </div>
+        <div style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
+          <p style={{ fontSize: '10px', color: 'rgba(52,211,153,0.7)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Income</p>
+          <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: '#34d399', letterSpacing: '-1px' }}>€{totalIncome.toFixed(2)}</p>
+          <Trend current={totalIncome} previous={lastIncome} invert={false} />
+        </div>
+        <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.15)', borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
+          <p style={{ fontSize: '10px', color: 'rgba(248,113,113,0.7)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Expenses</p>
+          <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: '#f87171', letterSpacing: '-1px' }}>€{totalExpenses.toFixed(2)}</p>
+          <Trend current={totalExpenses} previous={lastExpenses} invert={true} />
+        </div>
       </div>
-      <form onSubmit={addTransaction} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <input type="number" placeholder="Amount (€)" value={amount}
-          onChange={e => setAmount(e.target.value)} required min="0" step="0.01"
-          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: `1px solid ${c.inputBorder}`, background: c.inputBg, color: c.inputText, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
-        <select value={category} onChange={e => setCategory(e.target.value)}
-          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: `1px solid ${c.inputBorder}`, background: c.inputBg, color: c.inputText, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}>
-          {categories.map(cat => <option key={cat} value={cat} style={{ background: c.inputBg }}>{CATEGORY_ICONS[cat]} {cat}</option>)}
-        </select>
-        <input type="text" placeholder="Description (optional)" value={description}
-          onChange={e => setDescription(e.target.value)}
-          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: `1px solid ${c.inputBorder}`, background: c.inputBg, color: c.inputText, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
-        <input type="date" value={date} onChange={e => setDate(e.target.value)}
-          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: `1px solid ${c.inputBorder}`, background: c.inputBg, color: c.inputText, fontSize: '14px', outline: 'none', boxSizing: 'border-box', colorScheme: darkMode ? 'dark' : 'light' }} />
-        <button type="submit" style={{
-          padding: '13px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-          fontSize: '14px', fontWeight: 600, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff'
-        }}>Save Transaction</button>
-      </form>
-    </div>
-  )
+    )
+  }
 
   const TxRow = ({ t, last }) => (
     <div style={{
@@ -454,7 +546,6 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
         <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>💰</div>
         <span style={{ fontWeight: 700, fontSize: '15px', letterSpacing: '-0.3px', color: c.text }}>Budget</span>
       </div>
-
       <button onClick={() => navigateTo('profile')} style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px',
         borderRadius: '14px', border: 'none', cursor: 'pointer', marginBottom: '20px', transition: 'all .15s', textAlign: 'left',
@@ -469,7 +560,6 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
           <p style={{ fontSize: '11px', color: c.textSubtle, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.email}</p>
         </div>
       </button>
-
       <p style={{ fontSize: '10px', color: c.textFaint, textTransform: 'uppercase', letterSpacing: '1.5px', padding: '0 8px', marginBottom: '6px' }}>Menu</p>
       {NAV.map(n => (
         <button key={n.key} onClick={() => navigateTo(n.key)} style={{
@@ -484,7 +574,6 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
           <span style={{ fontSize: '13px', fontWeight: 500, color: page === n.key ? '#818cf8' : c.textNav }}>{n.label}</span>
         </button>
       ))}
-
       <div style={{ marginTop: 'auto', borderTop: `1px solid ${c.dividerStrong}`, paddingTop: '16px' }}>
         <div style={{ padding: '4px 2px', marginBottom: '8px' }}>
           <ThemeToggle />
@@ -515,7 +604,6 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
       )}
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-
         <div style={{
           padding: isMobile ? '12px 16px' : '16px 32px',
           borderBottom: `1px solid ${c.headerBorder}`,
@@ -545,27 +633,20 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
           </div>
         </div>
 
-        <div style={{
-          flex: 1, padding: isMobile ? '16px 12px' : '32px',
-          overflowY: 'auto',
-          paddingBottom: isMobile ? '90px' : '32px'
-        }}>
+        <div style={{ flex: 1, padding: isMobile ? '16px 12px' : '32px', overflowY: 'auto', paddingBottom: isMobile ? '90px' : '32px' }}>
 
           {page === 'dashboard' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <StatCards />
               <AddButton />
-              {showForm && <AddForm />}
+              {showForm && <AddForm type={type} setType={setType} amount={amount} setAmount={setAmount} category={category} setCategory={setCategory} categories={categories} description={description} setDescription={setDescription} date={date} setDate={setDate} onSubmit={addTransaction} c={c} darkMode={darkMode} />}
               <SpendingProgress filtered={filtered} c={c} />
+              <MiniTrendChart transactions={transactions} c={c} />
               <TopCategories filtered={filtered} c={c} />
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    Recent · {currentPeriodLabel}
-                  </p>
-                  <button onClick={() => navigateTo('transactions')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#818cf8', fontWeight: 500 }}>
-                    View all →
-                  </button>
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>Recent · {currentPeriodLabel}</p>
+                  <button onClick={() => navigateTo('transactions')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#818cf8', fontWeight: 500 }}>View all →</button>
                 </div>
                 <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', overflow: 'hidden' }}>
                   {loading && <p style={{ textAlign: 'center', color: c.textFaint, padding: '32px' }}>Loading...</p>}
@@ -582,12 +663,10 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <StatCards />
               <AddButton />
-              {showForm && <AddForm />}
+              {showForm && <AddForm type={type} setType={setType} amount={amount} setAmount={setAmount} category={category} setCategory={setCategory} categories={categories} description={description} setDescription={setDescription} date={date} setDate={setDate} onSubmit={addTransaction} c={c} darkMode={darkMode} />}
               <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', overflow: 'hidden' }}>
                 <div style={{ padding: '14px 16px', borderBottom: `1px solid ${c.dividerStrong}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    All · {currentPeriodLabel}
-                  </p>
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>All · {currentPeriodLabel}</p>
                   <p style={{ fontSize: '11px', color: c.textFaint }}>{filtered.length} total</p>
                 </div>
                 {filtered.length === 0 && <EmptyState />}
@@ -643,8 +722,8 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
           )}
 
           {page === 'profile' && (
-  <Profile session={session} transactions={transactions} filtered={filtered} period={period} currentPeriodLabel={currentPeriodLabel} darkMode={darkMode} />
-)}
+            <Profile session={session} transactions={transactions} filtered={filtered} period={period} currentPeriodLabel={currentPeriodLabel} darkMode={darkMode} />
+          )}
 
           {page === 'settings' && (
             <div style={{ maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -668,7 +747,6 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
                   <p style={{ fontSize: '14px', color: c.text }}>{new Date(session.user.created_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
               </div>
-
               <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
                 <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Appearance</p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -679,7 +757,6 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
                   <ThemeToggle />
                 </div>
               </div>
-
               <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
                 <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Stats</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -696,7 +773,6 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
                   ))}
                 </div>
               </div>
-
               <button onClick={() => supabase.auth.signOut()} style={{
                 width: '100%', padding: '14px', borderRadius: '14px', cursor: 'pointer',
                 border: '1px solid rgba(248,113,113,0.3)', background: c.logoutBg,
