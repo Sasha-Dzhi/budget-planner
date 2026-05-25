@@ -447,18 +447,29 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
   )
 
   const PeriodSelector = () => (
-    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+  isMobile ? (
+    <select value={period} onChange={e => setPeriod(e.target.value)} style={{
+      padding: '6px 12px', borderRadius: '10px', border: `1px solid ${c.cardBorder}`,
+      background: c.periodBg, color: c.text, fontSize: '13px', fontWeight: 600,
+      cursor: 'pointer', outline: 'none'
+    }}>
+      {PERIODS.map(p => (
+        <option key={p.key} value={p.key}>{p.label}</option>
+      ))}
+    </select>
+  ) : (
+    <div style={{ display: 'flex', background: c.periodBg, borderRadius: '10px', padding: '3px', gap: '2px' }}>
       {PERIODS.map(p => (
         <button key={p.key} onClick={() => setPeriod(p.key)} style={{
-          padding: '6px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer',
-          fontSize: '11px', fontWeight: 500, transition: 'all .15s',
-          background: period === p.key ? c.periodActive : c.periodBg,
+          padding: '5px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+          fontSize: '11px', fontWeight: 600, transition: 'all .15s',
+          background: period === p.key ? c.periodActive : 'transparent',
           color: period === p.key ? c.periodActiveColor : c.periodColor,
-          outline: period === p.key ? `1px solid ${c.periodActiveBorder}` : '1px solid transparent'
         }}>{p.label}</button>
       ))}
     </div>
   )
+)
 
   const StatCards = ({ period }) => {
     const lastMonthRange = getPeriodRange('last_month')
@@ -801,20 +812,17 @@ const QuickAdd = ({ c, onSave }) => {
                 <span style={{ fontWeight: 700, fontSize: '14px', color: c.text }}>Budget</span>
               </div>
             )}
-            {!isMobile && (
-              <h1 style={{ fontSize: '18px', fontWeight: 700, color: c.text, letterSpacing: '-0.5px' }}>
-                {NAV.find(n => n.key === page)?.label || 'Profile'}
-              </h1>
-            )}
+           {!isMobile && (
+  <h1 style={{ fontSize: '18px', fontWeight: 700, color: c.text, letterSpacing: '-0.5px' }}>
+    {NAV.find(n => n.key === page)?.label || 'Profile'}
+  </h1>
+)}
+            
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {isMobile && <ThemeToggle />}
-            {page !== 'settings' && (
-              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                <PeriodSelector />
-              </div>
-            )}
-          </div>
+  {page !== 'settings' && page !== 'charts' && <PeriodSelector />}
+  {isMobile && <ThemeToggle />}
+</div>
         </div>
 
         <div style={{ flex: 1, padding: isMobile ? '16px 12px' : '32px', overflowY: 'auto', paddingBottom: isMobile ? '90px' : '32px' }}>
