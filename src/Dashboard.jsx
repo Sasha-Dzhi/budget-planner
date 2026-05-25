@@ -459,7 +459,7 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
     </div>
   )
 
-  const StatCards = () => {
+  const StatCards = ({ period }) => {
     const lastMonthRange = getPeriodRange('last_month')
     const lastMonth = transactions.filter(t => {
       const d = new Date(t.date)
@@ -489,17 +489,17 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
         <div style={{ background: c.statBg, border: `1px solid ${c.statBorder}`, borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
           <p style={{ fontSize: '10px', color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Balance</p>
           <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: balance >= 0 ? c.text : '#f87171', letterSpacing: '-1px' }}>€{balance.toFixed(2)}</p>
-          <Trend current={balance} previous={lastBalance} invert={false} />
+          {period === 'this_month' && <Trend current={balance} previous={lastBalance} invert={false} />}
         </div>
         <div style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
           <p style={{ fontSize: '10px', color: 'rgba(52,211,153,0.7)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Income</p>
           <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: '#34d399', letterSpacing: '-1px' }}>€{totalIncome.toFixed(2)}</p>
-          <Trend current={totalIncome} previous={lastIncome} invert={false} />
+          {period === 'this_month' && <Trend current={totalIncome} previous={lastIncome} invert={false} />}
         </div>
         <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.15)', borderRadius: '16px', padding: isMobile ? '16px' : '20px' }}>
           <p style={{ fontSize: '10px', color: 'rgba(248,113,113,0.7)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Expenses</p>
           <p style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 800, color: '#f87171', letterSpacing: '-1px' }}>€{totalExpenses.toFixed(2)}</p>
-          <Trend current={totalExpenses} previous={lastExpenses} invert={true} />
+          {period === 'this_month' && <Trend current={totalExpenses} previous={lastExpenses} invert={true} />}
         </div>
       </div>
     )
@@ -820,7 +820,7 @@ const QuickAdd = ({ c, onSave }) => {
 
           {page === 'dashboard' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <StatCards />
+              <StatCards period={period} />
               <AddButton />
               <QuickAdd c={c} onSave={fetchTransactions} />
               {showForm && <AddForm type={type} setType={setType} amount={amount} setAmount={setAmount} category={category} setCategory={setCategory} categories={categories} description={description} setDescription={setDescription} date={date} setDate={setDate} onSubmit={addTransaction} c={c} darkMode={darkMode} />}
