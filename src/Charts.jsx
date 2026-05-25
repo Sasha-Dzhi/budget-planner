@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { useMemo, useState, useEffect } from 'react'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts'
 
 const COLORS = ['#6366f1','#f87171','#fbbf24','#a78bfa','#34d399','#60a5fa','#f472b6','#2dd4bf']
 
@@ -72,7 +72,15 @@ const nextHeatmapMonth = () => {
   }, [filtered])
 
   const totalExpenses = expenseByCategory.reduce((s, c) => s + c.value, 0)
+const [animatedData, setAnimatedData] = useState(expenseByCategory)
+const [donutOpacity, setDonutOpacity] = useState(1)
 
+useEffect(() => {
+  setDonutOpacity(0)
+  const t1 = setTimeout(() => setAnimatedData(expenseByCategory), 200)
+  const t2 = setTimeout(() => setDonutOpacity(1), 220)
+  return () => { clearTimeout(t1); clearTimeout(t2) }
+}, [expenseByCategory])
   const netWorth = useMemo(() => {
     let running = 0
     return months.map(m => {
@@ -131,44 +139,32 @@ const nextHeatmapMonth = () => {
         <Card half>
           <CardTitle title="Spending breakdown" />
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', width: '130px', height: '130px', flexShrink: 0 }}>
-              <svg viewBox="0 0 130 130" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-                {expenseByCategory.slice(0, 5).reduce((acc, cat, i, arr) => {
-                  const total = arr.reduce((s, c) => s + c.value, 0)
-                  const pct = cat.value / total
-                  const startAngle = acc.angle
-                  const endAngle = startAngle + pct * 2 * Math.PI
-                  const r = 55, cx = 65, cy = 65, innerR = 38
-                  const x1 = cx + r * Math.cos(startAngle - Math.PI / 2)
-                  const y1 = cy + r * Math.sin(startAngle - Math.PI / 2)
-                  const x2 = cx + r * Math.cos(endAngle - Math.PI / 2)
-                  const y2 = cy + r * Math.sin(endAngle - Math.PI / 2)
-                  const ix1 = cx + innerR * Math.cos(endAngle - Math.PI / 2)
-                  const iy1 = cy + innerR * Math.sin(endAngle - Math.PI / 2)
-                  const ix2 = cx + innerR * Math.cos(startAngle - Math.PI / 2)
-                  const iy2 = cy + innerR * Math.sin(startAngle - Math.PI / 2)
-                  const large = pct > 0.5 ? 1 : 0
-                  acc.paths.push(
-                    <path key={i} d={`M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${ix1} ${iy1} A ${innerR} ${innerR} 0 ${large} 0 ${ix2} ${iy2} Z`}
-                      fill={COLORS[i % COLORS.length]} stroke={c.cardBg} strokeWidth="2" />
-                  )
-                  acc.angle = endAngle
-                  return acc
-                }, { paths: [], angle: 0 }).paths}
-                <text x="65" y="60" textAnchor="middle" style={{ fontSize: '10px', fill: c.textMuted }}>Total</text>
-                <text x="65" y="76" textAnchor="middle" style={{ fontSize: '14px', fontWeight: 700, fill: c.text }}>€{totalExpenses.toFixed(0)}</text>
-              </svg>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {expenseByCategory.slice(0, 5).map((cat, i) => (
-                <div key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
-                  <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: COLORS[i % COLORS.length], flexShrink: 0 }} />
-                  <span style={{ color: c.textMuted }}>{cat.name}</span>
-                  <span style={{ color: c.text, fontWeight: 600, marginLeft: 'auto' }}>{Math.round(cat.value / totalExpenses * 100)}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
+  <div style={{ width: '150px', height: '150px', flexShrink: 0, position: 'relative' }}>
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie data={animatedData.slice(0, 5)} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" isAnimationActive={true} animationBegin={0} animationDuration={1600}>
+          {animatedData.slice(0, 5).map((entry, i) => (
+            <Cell key={i} fill={COLORS[i % COLORS.length]} strokeWidth={0} />
+          ))}
+        </Pie>
+        <Tooltip contentStyle={tooltipStyle} formatter={v => `€${v.toFixed(2)}`} />
+      </PieChart>
+    </ResponsiveContainer>
+    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+  <p style={{ fontSize: '10px', color: c.textMuted, marginBottom: '2px' }}>Total</p>
+  <p style={{ fontSize: '15px', fontWeight: 700, color: c.text }}>€{totalExpenses.toFixed(0)}</p>
+</div>
+  </div>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+    {animatedData.slice(0, 5).map((cat, i) => (
+      <div key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
+        <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: COLORS[i % COLORS.length], flexShrink: 0 }} />
+        <span style={{ color: c.textMuted }}>{cat.name}</span>
+        <span style={{ color: c.text, fontWeight: 600, marginLeft: 'auto' }}>{Math.round(cat.value / totalExpenses * 100)}%</span>
+      </div>
+    ))}
+  </div>
+</div>
         </Card>
 
         <Card half>
