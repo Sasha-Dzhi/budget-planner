@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
+import Goals from './Goals'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line
@@ -31,6 +32,7 @@ const NAV = [
   { key: 'transactions', icon: '💸', label: 'Transactions' },
   { key: 'charts', icon: '📈', label: 'Charts' },
   { key: 'settings', icon: '⚙️', label: 'Settings' },
+  { key: 'goals', icon: '🎯', label: 'Goals' },
 ]
 
 const PAGES_PER_VIEW = 10
@@ -150,7 +152,52 @@ const relativeDate = (dateStr) => {
   if (days < 30) return `${Math.floor(days / 7)}w ago`
   return dateStr
 }
-
+const GoalsSummary = ({ c, session, navigateTo }) => {
+  const [goals, setGoals] = useState([])
+  useEffect(() => {
+    supabase.from('goals').select('*').order('created_at').then(({ data }) => setGoals(data || []))
+  }, [])
+  if (goals.length === 0) return null
+  return (
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>Savings Goals</p>
+        <button onClick={() => navigateTo('goals')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1', fontSize: '12px', fontWeight: 600 }}>View all →</button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {goals.slice(0, 3).map(g => {
+          const pct = Math.min(100, Math.round((g.saved_amount / g.target_amount) * 100))
+          const done = pct >= 100
+          const daysRemaining = g.deadline ? Math.ceil((new Date(g.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null
+          const tip = (() => {
+            if (!g.deadline || done || daysRemaining <= 0) return null
+            if (daysRemaining <= 30) return `€${Math.ceil((g.target_amount - g.saved_amount) / daysRemaining)}/day`
+            const months = (new Date(g.deadline).getFullYear() - new Date().getFullYear()) * 12 + new Date(g.deadline).getMonth() - new Date().getMonth()
+            if (months <= 0) return null
+            return `€${Math.ceil((g.target_amount - g.saved_amount) / months)}/month`
+          })()
+          return (
+            <div key={g.id}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '16px' }}>{g.emoji || '🎯'}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: c.text }}>{g.name}</span>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: done ? '#34d399' : c.text }}>{done ? '🎉 Done!' : `${pct}%`}</span>
+                  {tip && <p style={{ fontSize: '11px', color: '#a78bfa', margin: 0 }}>💡 Save {tip}</p>}
+                </div>
+              </div>
+              <div style={{ height: '6px', borderRadius: '99px', background: c.periodBg, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${pct}%`, borderRadius: '99px', background: done ? 'linear-gradient(90deg,#34d399,#10b981)' : 'linear-gradient(90deg,#6366f1,#8b5cf6)', transition: 'width 0.5s ease' }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 const TopCategories = ({ filtered, c }) => {
   const expenseTotals = {}
   filtered.filter(t => t.type === 'expense').forEach(t => {
@@ -670,6 +717,7 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
               <SpendingProgress filtered={filtered} c={c} />
               <MiniTrendChart transactions={transactions} c={c} />
               <TopCategories filtered={filtered} c={c} />
+              <GoalsSummary c={c} session={session} navigateTo={navigateTo} />
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                   <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>Recent · {currentPeriodLabel}</p>
@@ -809,7 +857,9 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
           {page === 'profile' && (
             <Profile session={session} transactions={transactions} filtered={filtered} period={period} currentPeriodLabel={currentPeriodLabel} darkMode={darkMode} />
           )}
-
+          {page === 'goals' && (
+  <Goals session={session} c={c} isMobile={isMobile} />
+)}
           {page === 'settings' && (
             <div style={{ maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
