@@ -75,8 +75,8 @@ export default function Goals({ session, c, isMobile }) {
 
       {/* FORM MODAL */}
       {showForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
-          <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '24px', padding: '28px', width: '100%', maxWidth: '420px' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,1)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1000, padding: '16px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ background: c.inputBg || c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '24px', padding: '28px', width: '100%', maxWidth: '420px', marginTop: '20px', marginBottom: '20px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 700, color: c.text, marginBottom: '20px' }}>{editing ? 'Edit Goal' : 'New Goal'}</h2>
 
             {/* Emoji picker */}

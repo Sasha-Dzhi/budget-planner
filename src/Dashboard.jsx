@@ -67,7 +67,7 @@ const getColors = (dark) => dark ? {
   sidebarBorder: 'rgba(255,255,255,0.06)',
   headerBg: 'rgba(8,8,16,0.9)',
   headerBorder: 'rgba(255,255,255,0.05)',
-  cardBg: 'rgba(255,255,255,0.02)',
+  cardBg: '#1a1b2e',
   cardBorder: 'rgba(255,255,255,0.06)',
   cardBgAlt: 'rgba(255,255,255,0.03)',
   cardBorderAlt: 'rgba(255,255,255,0.08)',
