@@ -32,8 +32,8 @@ const NAV = [
   { key: 'dashboard', icon: '📊', label: 'Dashboard' },
   { key: 'transactions', icon: '💸', label: 'Transactions' },
   { key: 'charts', icon: '📈', label: 'Charts' },
-  { key: 'settings', icon: '⚙️', label: 'Settings' },
   { key: 'goals', icon: '🎯', label: 'Goals' },
+  { key: 'settings', icon: '⚙️', label: 'Settings' },
 ]
 
 const PAGES_PER_VIEW = 10
@@ -737,10 +737,13 @@ const QuickAdd = ({ c, onSave }) => {
 
   const SidebarContent = () => (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 8px', marginBottom: '20px' }}>
-        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>💰</div>
-        <span style={{ fontWeight: 700, fontSize: '15px', letterSpacing: '-0.3px', color: c.text }}>Budget</span>
-      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '20px' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>💰</div>
+    <span style={{ fontWeight: 700, fontSize: '15px', letterSpacing: '-0.3px', color: c.text }}>Budget</span>
+  </div>
+  <ThemeToggle />
+</div>
       <button onClick={() => navigateTo('profile')} style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px',
         borderRadius: '14px', border: 'none', cursor: 'pointer', marginBottom: '20px', transition: 'all .15s', textAlign: 'left',
@@ -755,6 +758,7 @@ const QuickAdd = ({ c, onSave }) => {
           <p style={{ fontSize: '11px', color: c.textSubtle, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.email}</p>
         </div>
       </button>
+
       <p style={{ fontSize: '10px', color: c.textFaint, textTransform: 'uppercase', letterSpacing: '1.5px', padding: '0 8px', marginBottom: '6px' }}>Menu</p>
       {NAV.map(n => (
         <button key={n.key} onClick={() => navigateTo(n.key)} style={{
@@ -770,18 +774,15 @@ const QuickAdd = ({ c, onSave }) => {
         </button>
       ))}
       <div style={{ marginTop: 'auto', borderTop: `1px solid ${c.dividerStrong}`, paddingTop: '16px' }}>
-        <div style={{ padding: '4px 2px', marginBottom: '8px' }}>
-          <ThemeToggle />
-        </div>
-        <button onClick={() => supabase.auth.signOut()} style={{
-          width: '100%', padding: '8px 10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-          fontSize: '12px', fontWeight: 500, background: c.logoutBg, color: '#f87171', textAlign: 'left', transition: 'background .15s'
-        }}
-          onMouseOver={e => e.currentTarget.style.background = c.logoutBgHover}
-          onMouseOut={e => e.currentTarget.style.background = c.logoutBg}>
-          Log out
-        </button>
-      </div>
+  <button onClick={() => supabase.auth.signOut()} style={{
+    width: '100%', padding: '8px 10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+    fontSize: '12px', fontWeight: 500, background: c.logoutBg, color: '#f87171', textAlign: 'left', transition: 'all .15s'
+  }}
+    onMouseOver={e => e.currentTarget.style.background = c.logoutBgHover}
+    onMouseOut={e => e.currentTarget.style.background = c.logoutBg}>
+    Log out
+  </button>
+</div>
     </>
   )
 
@@ -820,7 +821,7 @@ const QuickAdd = ({ c, onSave }) => {
             
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-  {page !== 'settings' && page !== 'charts' && <PeriodSelector />}
+  {page !== 'settings' && page !== 'charts' && page !== 'goals' && <PeriodSelector />}
   {isMobile && <ThemeToggle />}
 </div>
         </div>

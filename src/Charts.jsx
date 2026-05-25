@@ -150,7 +150,7 @@ export default function Charts({ transactions, filtered, c, isMobile }) {
                       <Cell key={i} fill={COLORS[i % COLORS.length]} strokeWidth={0} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={tooltipStyle} formatter={v => `€${v.toFixed(2)}`} />
+                  {!isMobile && <Tooltip contentStyle={tooltipStyle} formatter={v => `€${v.toFixed(2)}`} />}
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
