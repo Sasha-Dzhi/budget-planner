@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 const COLORS = ['#6366f1','#f87171','#fbbf24','#a78bfa','#34d399','#60a5fa','#f472b6','#2dd4bf']
@@ -19,10 +19,7 @@ const getLast6Months = (transactions) => {
   return months
 }
 
-const getDailySpending = (transactions) => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth()
+const getDailySpending = (transactions, year, month) => {
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const days = []
   for (let i = 1; i <= daysInMonth; i++) {
@@ -44,7 +41,26 @@ const getHeatmapColor = (amount, max) => {
 
 export default function Charts({ transactions, c, isMobile }) {
   const months = useMemo(() => getLast6Months(transactions), [transactions])
-  const dailySpending = useMemo(() => getDailySpending(transactions), [transactions])
+  const [heatmapDate, setHeatmapDate] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() })
+const dailySpending = useMemo(() => getDailySpending(transactions, heatmapDate.year, heatmapDate.month), [transactions, heatmapDate])
+
+const heatmapMonthLabel = new Date(heatmapDate.year, heatmapDate.month).toLocaleString('default', { month: 'long', year: 'numeric' })
+const prevHeatmapMonth = () => {
+  setHeatmapDate(d => {
+    const m = d.month === 0 ? 11 : d.month - 1
+    const y = d.month === 0 ? d.year - 1 : d.year
+    return { year: y, month: m }
+  })
+}
+const nextHeatmapMonth = () => {
+  const now = new Date()
+  setHeatmapDate(d => {
+    if (d.year === now.getFullYear() && d.month === now.getMonth()) return d
+    const m = d.month === 11 ? 0 : d.month + 1
+    const y = d.month === 11 ? d.year + 1 : d.year
+    return { year: y, month: m }
+  })
+}
   const maxDaily = useMemo(() => Math.max(...dailySpending.map(d => d.amount), 1), [dailySpending])
 
   const expenseByCategory = useMemo(() => {
@@ -66,21 +82,26 @@ export default function Charts({ transactions, c, isMobile }) {
   }, [months])
 
   const waterfall = useMemo(() => {
-    const totalIncome = months.reduce((s, m) => s + m.income, 0)
-    const catTotals = {}
-    transactions.filter(t => t.type === 'expense').forEach(t => {
-      catTotals[t.category] = (catTotals[t.category] || 0) + t.amount
-    })
-    const sorted = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 5)
-    const bars = [{ name: 'Income', value: Math.round(totalIncome), color: '#34d399', isIncome: true }]
-    let running = totalIncome
-    sorted.forEach(([name, val]) => {
-      bars.push({ name, value: Math.round(val), color: '#f87171', start: Math.round(running - val), isIncome: false })
-      running -= val
-    })
-    bars.push({ name: 'Balance', value: Math.round(running), color: '#6366f1', isIncome: true })
-    return bars
-  }, [transactions, months])
+  const totalIncome = months.reduce((s, m) => s + m.income, 0)
+  const catTotals = {}
+  transactions.filter(t => t.type === 'expense').forEach(t => {
+    catTotals[t.category] = (catTotals[t.category] || 0) + t.amount
+  })
+  const sorted = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  const bars = []
+  
+  bars.push({ name: 'Income', value: Math.round(totalIncome), display: Math.round(totalIncome), invisible: 0, color: '#34d399', isIncome: true })
+  
+  let running = totalIncome
+  sorted.forEach(([name, val]) => {
+    const roundedVal = Math.round(val)
+    running -= val
+    bars.push({ name, value: roundedVal, display: roundedVal, invisible: Math.round(running), color: '#f87171', isIncome: false })
+  })
+  
+  bars.push({ name: 'Balance', value: Math.round(running), display: Math.round(running), invisible: 0, color: '#6366f1', isIncome: true })
+  return bars
+}, [transactions, months])
 
   const tooltipStyle = { backgroundColor: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '12px', color: c.text, fontSize: '12px' }
 
@@ -111,11 +132,6 @@ export default function Charts({ transactions, c, isMobile }) {
           <CardTitle title="Spending breakdown" />
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <div style={{ position: 'relative', width: '130px', height: '130px', flexShrink: 0 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={expenseByCategory.slice(0, 5)} startAngle={90} endAngle={-270}>
-                  <Tooltip contentStyle={tooltipStyle} formatter={v => `€${v.toFixed(2)}`} />
-                </BarChart>
-              </ResponsiveContainer>
               <svg viewBox="0 0 130 130" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
                 {expenseByCategory.slice(0, 5).reduce((acc, cat, i, arr) => {
                   const total = arr.reduce((s, c) => s + c.value, 0)
@@ -245,7 +261,14 @@ export default function Charts({ transactions, c, isMobile }) {
 
       {/* ROW 5 — Daily Heatmap */}
       <Card>
-        <CardTitle title={`Daily spending heatmap — ${new Date().toLocaleString('default', { month: 'long' })}`} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+  <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>Daily spending heatmap</p>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <button onClick={prevHeatmapMonth} style={{ background: c.periodBg, border: `1px solid ${c.cardBorder}`, borderRadius: '8px', padding: '4px 10px', color: c.textMuted, cursor: 'pointer', fontSize: '14px' }}>←</button>
+    <span style={{ fontSize: '12px', fontWeight: 600, color: c.text, minWidth: '100px', textAlign: 'center' }}>{heatmapMonthLabel}</span>
+    <button onClick={nextHeatmapMonth} style={{ background: c.periodBg, border: `1px solid ${c.cardBorder}`, borderRadius: '8px', padding: '4px 10px', color: c.textMuted, cursor: 'pointer', fontSize: '14px' }}>→</button>
+  </div>
+</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '12px' }}>
           {dailySpending.map(({ day, amount }) => (
             <div key={day} title={`Day ${day}: €${amount.toFixed(2)}`} style={{
@@ -266,22 +289,34 @@ export default function Charts({ transactions, c, isMobile }) {
       </Card>
 
       {/* ROW 6 — Waterfall */}
-      <Card>
-        <CardTitle title="Cash flow waterfall" />
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={waterfall} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={c.divider} />
-            <XAxis dataKey="name" tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} tickFormatter={v => '€' + v} />
-            <Tooltip contentStyle={tooltipStyle} formatter={v => `€${v}`} />
-            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-              {waterfall.map((entry, i) => (
-                <Cell key={i} fill={entry.color} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </Card>
+<Card>
+  <CardTitle title="Cash flow waterfall" />
+  <div style={{ display: 'flex', gap: '16px', marginBottom: '12px', fontSize: '12px' }}>
+    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: c.textMuted }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#34d399' }} />Income</span>
+    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: c.textMuted }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#f87171' }} />Expenses</span>
+    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: c.textMuted }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#6366f1' }} />Balance</span>
+  </div>
+  <ResponsiveContainer width="100%" height={260}>
+    <BarChart data={waterfall} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+      <CartesianGrid strokeDasharray="3 3" stroke={c.divider} />
+      <XAxis dataKey="name" tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} />
+      <YAxis tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} tickFormatter={v => '€' + v} />
+      <Tooltip
+        contentStyle={tooltipStyle}
+        formatter={(value, name, props) => {
+          if (name === 'invisible') return null
+          return [`€${props.payload.value}`, props.payload.name]
+        }}
+      />
+      <Bar dataKey="invisible" stackId="a" fill="transparent" />
+      <Bar dataKey="display" stackId="a" radius={[4, 4, 0, 0]}>
+        {waterfall.map((entry, i) => (
+          <Cell key={i} fill={entry.color} />
+        ))}
+      </Bar>
+    </BarChart>
+  </ResponsiveContainer>
+</Card>
     </div>
   )
 }
