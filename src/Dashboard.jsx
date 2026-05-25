@@ -198,61 +198,58 @@ const GoalsSummary = ({ c, session, navigateTo }) => {
     </div>
   )
 }
-const TopCategories = ({ filtered, c }) => {
+const TopSpending = ({ filtered, c }) => {
   const expenseTotals = {}
   filtered.filter(t => t.type === 'expense').forEach(t => {
     expenseTotals[t.category] = (expenseTotals[t.category] || 0) + t.amount
   })
-  const sortedExpenses = Object.entries(expenseTotals).sort((a, b) => b[1] - a[1]).slice(0, 4)
-  const maxExpense = sortedExpenses[0]?.[1] || 1
+  const sorted = Object.entries(expenseTotals).sort((a, b) => b[1] - a[1]).slice(0, 4)
+  const max = sorted[0]?.[1] || 1
+  if (sorted.length === 0) return null
+  return (
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px', flex: 1 }}>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Top spending</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {sorted.map(([cat, amount]) => (
+          <div key={cat}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+              <span style={{ fontSize: '12px', color: c.text }}>{CATEGORY_ICONS[cat]} {cat}</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#f87171' }}>€{amount.toFixed(2)}</span>
+            </div>
+            <div style={{ height: '4px', background: c.statBg, borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${(amount / max) * 100}%`, background: 'linear-gradient(90deg, #f87171, #f47266)', borderRadius: '3px' }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
+const TopIncome = ({ filtered, c }) => {
   const incomeTotals = {}
   filtered.filter(t => t.type === 'income').forEach(t => {
     incomeTotals[t.category] = (incomeTotals[t.category] || 0) + t.amount
   })
-  const sortedIncome = Object.entries(incomeTotals).sort((a, b) => b[1] - a[1]).slice(0, 4)
-  const maxIncome = sortedIncome[0]?.[1] || 1
-
-  if (sortedExpenses.length === 0 && sortedIncome.length === 0) return null
-
+  const sorted = Object.entries(incomeTotals).sort((a, b) => b[1] - a[1]).slice(0, 4)
+  const max = sorted[0]?.[1] || 1
+  if (sorted.length === 0) return null
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {sortedExpenses.length > 0 && (
-        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
-          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Top spending</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {sortedExpenses.map(([cat, amount]) => (
-              <div key={cat}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                  <span style={{ fontSize: '12px', color: c.text }}>{CATEGORY_ICONS[cat]} {cat}</span>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#f87171' }}>€{amount.toFixed(2)}</span>
-                </div>
-                <div style={{ height: '5px', background: c.statBg, borderRadius: '3px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${(amount / maxExpense) * 100}%`, background: 'linear-gradient(90deg, #f87171, #f472b6)', borderRadius: '3px', transition: 'width .5s ease' }} />
-                </div>
-              </div>
-            ))}
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px', flex: 1 }}>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Top income</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {sorted.map(([cat, amount]) => (
+          <div key={cat}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+              <span style={{ fontSize: '12px', color: c.text }}>{CATEGORY_ICONS[cat]} {cat}</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#34d399' }}>€{amount.toFixed(2)}</span>
+            </div>
+            <div style={{ height: '4px', background: c.statBg, borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${(amount / max) * 100}%`, background: 'linear-gradient(90deg, #34d399, #10b981)', borderRadius: '3px' }} />
+            </div>
           </div>
-        </div>
-      )}
-      {sortedIncome.length > 0 && (
-        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
-          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Top income</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {sortedIncome.map(([cat, amount]) => (
-              <div key={cat}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                  <span style={{ fontSize: '12px', color: c.text }}>{CATEGORY_ICONS[cat]} {cat}</span>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#34d399' }}>€{amount.toFixed(2)}</span>
-                </div>
-                <div style={{ height: '5px', background: c.statBg, borderRadius: '3px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${(amount / maxIncome) * 100}%`, background: 'linear-gradient(90deg, #34d399, #10b981)', borderRadius: '3px', transition: 'width .5s ease' }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   )
 }
@@ -829,7 +826,10 @@ const QuickAdd = ({ c, onSave }) => {
               {showForm && <AddForm type={type} setType={setType} amount={amount} setAmount={setAmount} category={category} setCategory={setCategory} categories={categories} description={description} setDescription={setDescription} date={date} setDate={setDate} onSubmit={addTransaction} c={c} darkMode={darkMode} />}
               <SpendingProgress filtered={filtered} c={c} />
               <MiniTrendChart transactions={transactions} c={c} />
-              <TopCategories filtered={filtered} c={c} />
+              <div style={{ display: 'flex', gap: '16px' }}>
+  <TopSpending filtered={filtered} c={c} />
+  <TopIncome filtered={filtered} c={c} />
+</div>
               <GoalsSummary c={c} session={session} navigateTo={navigateTo} />
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
