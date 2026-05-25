@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import Goals from './Goals'
+import Charts from './Charts'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line
@@ -925,47 +926,8 @@ const QuickAdd = ({ c, onSave }) => {
           )}
 
           {page === 'charts' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {filtered.length === 0 ? <EmptyState /> : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px' }}>
-                    {[{ title: 'Expenses by category', data: expenseByCategory }, { title: 'Income by category', data: incomeByCategory }].map(({ title, data }) => (
-                      <div key={title} style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
-                        <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>{title}</p>
-                        {data.length === 0 ? (
-                          <p style={{ textAlign: 'center', color: c.textFaint, padding: '32px 0', fontSize: '12px' }}>No data yet.</p>
-                        ) : (
-                          <ResponsiveContainer width="100%" height={200}>
-                            <PieChart>
-                              <Pie data={data} cx="50%" cy="45%" outerRadius={65} dataKey="value">
-                                {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                              </Pie>
-                              <Tooltip contentStyle={tooltipStyle} formatter={(v) => `€${v.toFixed(2)}`} />
-                              <Legend wrapperStyle={{ fontSize: '11px', color: c.textMuted }} />
-                            </PieChart>
-                          </ResponsiveContainer>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px' }}>
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Monthly overview</p>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={monthlyData()} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={c.divider} />
-                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={tooltipStyle} formatter={(v) => `€${v.toFixed(2)}`} />
-                        <Legend wrapperStyle={{ fontSize: '11px', color: c.textMuted }} />
-                        <Bar dataKey="income" fill="#34d399" radius={[6, 6, 0, 0]} name="Income" />
-                        <Bar dataKey="expenses" fill="#f87171" radius={[6, 6, 0, 0]} name="Expenses" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+  <Charts transactions={transactions} c={c} isMobile={isMobile} />
+)}
 
           {page === 'profile' && (
             <Profile session={session} transactions={transactions} filtered={filtered} period={period} currentPeriodLabel={currentPeriodLabel} darkMode={darkMode} />
