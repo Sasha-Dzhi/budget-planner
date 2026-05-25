@@ -926,7 +926,7 @@ const QuickAdd = ({ c, onSave }) => {
           )}
 
           {page === 'charts' && (
-  <Charts transactions={transactions} c={c} isMobile={isMobile} />
+  <Charts transactions={transactions} filtered={filtered} c={c} isMobile={isMobile} />
 )}
 
           {page === 'profile' && (

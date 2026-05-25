@@ -39,7 +39,7 @@ const getHeatmapColor = (amount, max) => {
   return '#4f46e5'
 }
 
-export default function Charts({ transactions, c, isMobile }) {
+export default function Charts({ transactions, filtered, c, isMobile }) {
   const months = useMemo(() => getLast6Months(transactions), [transactions])
   const [heatmapDate, setHeatmapDate] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() })
 const dailySpending = useMemo(() => getDailySpending(transactions, heatmapDate.year, heatmapDate.month), [transactions, heatmapDate])
@@ -65,11 +65,11 @@ const nextHeatmapMonth = () => {
 
   const expenseByCategory = useMemo(() => {
     const totals = {}
-    transactions.filter(t => t.type === 'expense').forEach(t => {
+    filtered.filter(t => t.type === 'expense').forEach(t => {
       totals[t.category] = (totals[t.category] || 0) + t.amount
     })
     return Object.entries(totals).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
-  }, [transactions])
+  }, [filtered])
 
   const totalExpenses = expenseByCategory.reduce((s, c) => s + c.value, 0)
 
