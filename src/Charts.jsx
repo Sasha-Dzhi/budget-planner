@@ -227,15 +227,6 @@ const nextHeatmapMonth = () => {
       {/* ROW 4 — Category Trend */}
       <Card>
         <CardTitle title="Category trend" />
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
-          {['Food','Transport','Housing','Shopping','Entertainment','Health','Education'].map(cat => {
-            const hasData = transactions.some(t => t.category === cat && t.type === 'expense')
-            if (!hasData) return null
-            return (
-              <span key={cat} style={{ padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: 'rgba(99,102,241,0.12)', color: '#818cf8', cursor: 'default' }}>{cat}</span>
-            )
-          })}
-        </div>
         {['Food','Transport','Housing','Shopping','Entertainment','Health','Education'].map((cat, catIdx) => {
           const catData = months.map(m => ({
             label: m.label,
@@ -245,16 +236,20 @@ const nextHeatmapMonth = () => {
           if (!hasData) return null
           return (
             <div key={cat} style={{ marginBottom: '16px' }}>
-              <p style={{ fontSize: '12px', color: c.textMuted, marginBottom: '8px' }}>{cat}</p>
-              <ResponsiveContainer width="100%" height={80}>
-                <LineChart data={catData}>
-                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} tickFormatter={v => '€' + v} width={40} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={v => `€${v.toFixed(2)}`} />
-                  <Line type="monotone" dataKey="amount" stroke={COLORS[catIdx % COLORS.length]} strokeWidth={2} dot={{ r: 3, fill: COLORS[catIdx % COLORS.length] }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+    <p style={{ fontSize: '12px', fontWeight: 600, color: COLORS[catIdx % COLORS.length], minWidth: '90px', paddingTop: '8px', textAlign: 'right' }}>{cat}</p>
+    <div style={{ flex: 1 }}>
+      <ResponsiveContainer width="100%" height={80}>
+        <LineChart data={catData}>
+          <XAxis dataKey="label" tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: c.textSubtle }} axisLine={false} tickLine={false} tickFormatter={v => '€' + v} width={40} />
+          <Tooltip contentStyle={tooltipStyle} formatter={v => `€${v.toFixed(2)}`} />
+          <Line type="monotone" dataKey="amount" stroke={COLORS[catIdx % COLORS.length]} strokeWidth={2} dot={{ r: 3, fill: COLORS[catIdx % COLORS.length] }} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  </div>
+</div>
           )
         })}
       </Card>
