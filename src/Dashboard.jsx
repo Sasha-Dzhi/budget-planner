@@ -576,7 +576,119 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
     </div>
   ) : null
 }
+const QuickAdd = ({ c, onSave }) => {
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(null)
+  const [amount, setAmount] = useState('')
+  const [desc, setDesc] = useState('')
 
+  const QUICK_EXPENSES = [
+    { category: 'Food', emoji: '🍕' },
+    { category: 'Transport', emoji: '🚗' },
+    { category: 'Housing', emoji: '🏠' },
+    { category: 'Shopping', emoji: '🛒' },
+    { category: 'Entertainment', emoji: '🎬' },
+    { category: 'Health', emoji: '❤️' },
+    { category: 'Education', emoji: '📚' },
+    { category: 'Other', emoji: '📦' },
+  ]
+  const QUICK_INCOME = [
+    { category: 'Salary', emoji: '💼' },
+    { category: 'Freelance', emoji: '💻' },
+    { category: 'Investment', emoji: '📈' },
+    { category: 'Gift', emoji: '🎁' },
+    { category: 'Business', emoji: '🏢' },
+    { category: 'Other', emoji: '📦' },
+  ]
+
+  const handleSave = async () => {
+    if (!amount || !active) return
+    await supabase.from('transactions').insert({
+      type: active.type,
+      category: active.category,
+      amount: parseFloat(amount),
+      description: desc,
+      date: new Date().toISOString().slice(0, 10),
+      user_id: (await supabase.auth.getUser()).data.user.id
+    })
+    setActive(null)
+    setAmount('')
+    setDesc('')
+    setOpen(false)
+    onSave()
+  }
+
+  const chipStyle = (item, type) => ({
+    display: 'inline-flex', alignItems: 'center', gap: '5px',
+    padding: '7px 13px', borderRadius: '20px', fontSize: '12px',
+    fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer', border: 'none',
+    flexShrink: 0, transition: 'all 0.15s',
+    outline: active?.category === item.category && active?.type === type ? '2px solid #6366f1' : 'none',
+    outlineOffset: '1px',
+    background: type === 'expense' ? 'rgba(248,113,113,0.15)' : 'rgba(52,211,153,0.15)',
+    color: type === 'expense' ? '#f87171' : '#34d399',
+  })
+
+  return (
+    <div>
+      <button onClick={() => { setOpen(!open); setActive(null); setAmount(''); setDesc('') }} style={{
+        width: '100%', padding: '9px 16px', borderRadius: '12px',
+        border: `1px solid ${c.cardBorder}`, background: c.periodBg,
+        color: c.textMuted, fontSize: '13px', fontWeight: 600,
+        cursor: 'pointer', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', gap: '6px', transition: 'all 0.2s'
+      }}>
+        ⚡ Quick add
+        <span style={{ fontSize: '11px', transition: 'transform 0.3s', display: 'inline-block', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+      </button>
+
+      {open && (
+        <div style={{ marginTop: '8px', background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+          <div>
+            <p style={{ fontSize: '11px', color: c.textMuted, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '6px' }}>💸 Expenses</p>
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+              {QUICK_EXPENSES.map(q => (
+                <button key={q.category} onClick={() => setActive({ ...q, type: 'expense' })} style={chipStyle(q, 'expense')}>
+                  {q.emoji} {q.category}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p style={{ fontSize: '11px', color: c.textMuted, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '6px' }}>💰 Income</p>
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+              {QUICK_INCOME.map(q => (
+                <button key={q.category} onClick={() => setActive({ ...q, type: 'income' })} style={chipStyle(q, 'income')}>
+                  {q.emoji} {q.category}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {active && (
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', padding: '12px', borderRadius: '12px', background: c.periodBg, border: `1px solid ${c.cardBorder}` }}>
+              <span style={{ fontSize: '20px' }}>{active.emoji}</span>
+              <span style={{ fontSize: '13px', color: c.textMuted, flex: 1 }}>{active.category} · {active.type}</span>
+              <input type="number" placeholder="Amount €" value={amount} onChange={e => setAmount(e.target.value)}
+                autoFocus
+                style={{ width: '110px', padding: '8px 12px', borderRadius: '8px', border: `1px solid ${c.cardBorder}`, background: c.cardBg, color: c.text, fontSize: '13px' }} />
+              <input placeholder="Note (optional)" value={desc} onChange={e => setDesc(e.target.value)}
+                style={{ flex: 1, minWidth: '100px', padding: '8px 12px', borderRadius: '8px', border: `1px solid ${c.cardBorder}`, background: c.cardBg, color: c.text, fontSize: '13px' }} />
+              <button onClick={handleSave} style={{
+                padding: '8px 18px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                background: active.type === 'income' ? 'linear-gradient(135deg,#34d399,#10b981)' : 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                color: '#fff', fontSize: '13px', fontWeight: 600
+              }}>Save</button>
+              <button onClick={() => setActive(null)} style={{ padding: '8px 10px', borderRadius: '10px', border: `1px solid ${c.cardBorder}`, background: 'transparent', color: c.textMuted, fontSize: '13px', cursor: 'pointer' }}>✕</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
   const AddButton = () => (
     <button onClick={() => setShowForm(!showForm)} style={{
       width: '100%', padding: '14px', borderRadius: '14px', border: 'none', cursor: 'pointer',
@@ -713,6 +825,7 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <StatCards />
               <AddButton />
+              <QuickAdd c={c} onSave={fetchTransactions} />
               {showForm && <AddForm type={type} setType={setType} amount={amount} setAmount={setAmount} category={category} setCategory={setCategory} categories={categories} description={description} setDescription={setDescription} date={date} setDate={setDate} onSubmit={addTransaction} c={c} darkMode={darkMode} />}
               <SpendingProgress filtered={filtered} c={c} />
               <MiniTrendChart transactions={transactions} c={c} />
