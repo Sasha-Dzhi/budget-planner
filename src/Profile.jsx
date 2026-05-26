@@ -164,7 +164,7 @@ const badge = healthScore >= 80 ? { label: 'Finance Pro', emoji: '🏆', color: 
   const initial = (displayName || session.user.email)[0].toUpperCase()
 
   return (
-    <div style={{ maxWidth: '560px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ maxWidth: '560px', display: 'flex', flexDirection: 'column', gap: '16px', margin: '0 auto' }}>
 
       {/* Profile card */}
       <div style={cardStyle}>

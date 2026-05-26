@@ -847,7 +847,7 @@ const QuickAdd = ({ c, onSave }) => {
         <div style={{ flex: 1, padding: isMobile ? '16px 12px' : '32px', overflowY: 'auto', paddingBottom: isMobile ? '90px' : '32px' }}>
 
           {page === 'home' && (
-  <div style={{ maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
     <div>
       <h2 style={{ fontSize: '22px', fontWeight: 700, color: c.text, letterSpacing: '-0.5px' }}>
         {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}, {session.user.user_metadata?.name || session.user.email.split('@')[0]} 👋
@@ -860,41 +860,85 @@ const QuickAdd = ({ c, onSave }) => {
       {[
         { label: 'Balance', value: `€${(transactions.filter(t => t.type === 'income' && new Date(t.date) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1)).reduce((s,t) => s+t.amount,0) - transactions.filter(t => t.type === 'expense' && new Date(t.date) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1)).reduce((s,t) => s+t.amount,0)).toFixed(2)}`, color: c.text },
         { label: 'Spent today', value: `€${transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === new Date().toDateString()).reduce((s,t) => s+t.amount,0).toFixed(2)}`, color: '#f87171' },
-        { label: 'Budget left today', value: parseFloat(monthlyBudget) > 0 ? `€${Math.max(0, (parseFloat(monthlyBudget) / new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate()) - transactions.filter(t => t.type === 'expense' && t.date === new Date().toISOString().split('T')[0]).reduce((s,t) => s+t.amount,0)).toFixed(2)}` : 'Not set', color: '#4ade80' },
+        { label: 'Budget left today', value: parseFloat(monthlyBudget) > 0 ? `€${Math.max(0, (parseFloat(monthlyBudget) / new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate()) - transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === new Date().toDateString()).reduce((s,t) => s+t.amount,0)).toFixed(2)}` : 'Not set', color: '#4ade80' },
       ].map(s => (
-        <div key={s.label} style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '16px' }}>
+        <div key={s.label} style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '16px 20px' }}>
           <p style={{ fontSize: '11px', color: c.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>{s.label}</p>
-          <p style={{ fontSize: '20px', fontWeight: 700, color: s.color }}>{s.value}</p>
+          <p style={{ fontSize: '22px', fontWeight: 700, color: s.color }}>{s.value}</p>
         </div>
       ))}
     </div>
-    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '20px' }}>
-      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>💡 Daily tip</p>
-      <p style={{ fontSize: '14px', color: c.text, lineHeight: '1.6' }}>
-        {[
-          'The 50/30/20 rule: spend 50% on needs, 30% on wants, and save at least 20% of your income.',
-          'Tracking your spending is the first step to saving more. Just knowing where money goes changes behavior.',
-          'An emergency fund of 3-6 months of expenses gives you financial peace of mind.',
-          'Paying yourself first — saving before spending — is the most reliable way to build wealth.',
-          'Small daily expenses add up. A €5 coffee every day is €1,825 a year.',
-          'Automate your savings so you never have to think about it.',
-          'Review your subscriptions every 3 months — most people pay for things they forgot about.',
-        ][new Date().getDay()]}
-      </p>
-    </div>
-    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '20px' }}>
-      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Recent transactions</p>
-      {transactions.slice(0, 4).map((t, i) => (
-        <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 3 ? `1px solid ${c.cardBorder}` : 'none' }}>
-          <div>
-            <p style={{ fontSize: '14px', fontWeight: 500, color: c.text }}>{t.category}</p>
-            <p style={{ fontSize: '12px', color: c.textMuted }}>{t.date === new Date().toISOString().split('T')[0] ? 'Today' : 'Yesterday'}</p>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', flex: 1 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '20px', flex: 1 }}>
+          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>This week spending</p>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '80px' }}>
+            {(() => {
+              const days = ['M','T','W','T','F','S','S']
+              const today = new Date()
+              const weekData = Array.from({length: 7}, (_, i) => {
+                const d = new Date(today)
+                d.setDate(today.getDate() - (6 - i))
+                const dayStr = d.toDateString()
+                const total = transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === dayStr).reduce((s,t) => s+t.amount, 0)
+                return { day: days[i], total, isToday: i === 6 }
+              })
+              const max = Math.max(...weekData.map(d => d.total), 1)
+              return weekData.map((d, i) => (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', height: '100%', justifyContent: 'flex-end' }}>
+                  <div style={{ width: '100%', background: d.isToday ? '#f87171' : '#6366f1', borderRadius: '4px 4px 0 0', height: `${Math.max((d.total / max) * 100, 4)}%`, transition: 'height 0.3s' }} />
+                  <span style={{ fontSize: '9px', color: d.isToday ? '#f87171' : c.textMuted, fontWeight: d.isToday ? 700 : 400 }}>{d.day}</span>
+                </div>
+              ))
+            })()}
           </div>
-          <p style={{ fontSize: '14px', fontWeight: 600, color: t.type === 'income' ? '#4ade80' : '#f87171' }}>
-            {t.type === 'income' ? '+' : '-'}€{t.amount.toFixed(2)}
+        </div>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <span style={{ fontSize: '32px' }}>
+            {transactions.filter(t => t.type === 'income').reduce((s,t) => s+t.amount,0) - transactions.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount,0) > 0 ? '🚀' : '💪'}
+          </span>
+          <div>
+            <p style={{ fontSize: '15px', fontWeight: 700, color: '#6366f1', marginBottom: '2px' }}>
+              {(() => {
+                const income = transactions.filter(t => t.type === 'income').reduce((s,t) => s+t.amount,0)
+                const expense = transactions.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount,0)
+                const rate = income > 0 ? ((income - expense) / income * 100) : 0
+                return rate > 50 ? 'Finance Pro 🏆' : rate > 20 ? 'On Track' : 'Building Habits 💪'
+              })()}
+            </p>
+            <p style={{ fontSize: '12px', color: c.textMuted }}>
+              {(() => {
+                const income = transactions.filter(t => t.type === 'income').reduce((s,t) => s+t.amount,0)
+                const expense = transactions.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount,0)
+                const rate = income > 0 ? ((income - expense) / income * 100).toFixed(0) : 0
+                return `Savings rate ${rate}% · All time`
+              })()}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '20px', flex: 1 }}>
+          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Recent transactions</p>
+          {transactions.slice(0, 5).map((t, i) => (
+            <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 4 ? `1px solid ${c.cardBorder}` : 'none' }}>
+              <div>
+                <p style={{ fontSize: '14px', fontWeight: 500, color: c.text }}>{t.category}</p>
+                <p style={{ fontSize: '12px', color: c.textMuted }}>{new Date(t.date).toDateString() === new Date().toDateString() ? 'Today' : 'Yesterday'}</p>
+              </div>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: t.type === 'income' ? '#4ade80' : '#f87171' }}>
+                {t.type === 'income' ? '+' : '-'}€{t.amount.toFixed(2)}
+              </p>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '16px 20px' }}>
+          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>💡 Daily tip</p>
+          <p style={{ fontSize: '13px', color: c.text, lineHeight: '1.6' }}>
+            {['The 50/30/20 rule: spend 50% on needs, 30% on wants, and save at least 20% of your income.','Tracking your spending is the first step to saving more.','An emergency fund of 3-6 months of expenses gives you financial peace of mind.','Paying yourself first — saving before spending — is the most reliable way to build wealth.','Small daily expenses add up. A €5 coffee every day is €1,825 a year.','Automate your savings so you never have to think about it.','Review your subscriptions every 3 months — most people pay for things they forgot about.'][new Date().getDay()]}
           </p>
         </div>
-      ))}
+      </div>
     </div>
   </div>
 )}
@@ -1015,7 +1059,7 @@ const QuickAdd = ({ c, onSave }) => {
   <Goals session={session} c={c} isMobile={isMobile} />
 )}
           {page === 'settings' && (
-  <div style={{ maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+  <div style={{ maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '16px', margin: '0 auto' }}>
     <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
       <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Account</p>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
