@@ -54,6 +54,24 @@ export default function Profile({ session, transactions, filtered, currentPeriod
     setUploadingAvatar(false)
   }
 
+  const exportCSV = () => {
+  const headers = ['Date', 'Type', 'Category', 'Amount', 'Description']
+  const rows = transactions.map(t => [
+    t.date,
+    t.type,
+    t.category,
+    t.amount,
+    `"${(t.description || '').replace(/"/g, '""')}"`
+  ])
+  const csv = [headers, ...rows].map(r => r.join(';')).join('\n')
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'transactions.csv'
+  a.click()
+}
+
   const d = darkMode
 
   // Color shortcuts
@@ -107,6 +125,40 @@ export default function Profile({ session, transactions, filtered, currentPeriod
   const daysSinceFirst = firstTransaction
     ? Math.floor((new Date() - new Date(firstTransaction)) / (1000 * 60 * 60 * 24))
     : 0
+    // Spending streak
+const sortedDates = [...new Set(transactions.map(t => t.date))].sort()
+let streak = 0
+let currentStreak = 0
+const today = new Date().toISOString().split('T')[0]
+for (let i = 0; i < sortedDates.length; i++) {
+  if (i === 0) { currentStreak = 1; continue }
+  const diff = (new Date(sortedDates[i]) - new Date(sortedDates[i-1])) / (1000*60*60*24)
+  currentStreak = diff === 1 ? currentStreak + 1 : 1
+  streak = Math.max(streak, currentStreak)
+}
+const todayHasTransaction = transactions.some(t => t.date === today)
+const activeStreak = todayHasTransaction ? currentStreak : 0
+
+// Best month
+const monthlyNet = {}
+transactions.forEach(t => {
+  const month = t.date.slice(0, 7)
+  if (!monthlyNet[month]) monthlyNet[month] = 0
+  monthlyNet[month] += t.type === 'income' ? t.amount : -t.amount
+})
+const bestMonth = Object.entries(monthlyNet).sort((a, b) => b[1] - a[1])[0]
+
+// Health score
+const savingsScore = Math.min(savingsRate * 0.4, 40)
+const consistencyScore = Math.min(daysSinceFirst > 0 ? (transactions.length / daysSinceFirst * 30) * 30 : 0, 30)
+const streakScore = Math.min(streak * 2, 30)
+const healthScore = Math.round(savingsScore + consistencyScore + streakScore)
+
+// Badge
+const badge = healthScore >= 80 ? { label: 'Finance Pro', emoji: '🏆', color: '#f59e0b' }
+  : healthScore >= 60 ? { label: 'On Track', emoji: '🚀', color: '#6366f1' }
+  : healthScore >= 40 ? { label: 'Building Habits', emoji: '💪', color: '#10b981' }
+  : { label: 'Getting Started', emoji: '🌱', color: '#34d399' }
 
   const memberSince = new Date(session.user.created_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
   const initial = (displayName || session.user.email)[0].toUpperCase()
@@ -217,6 +269,41 @@ export default function Profile({ session, transactions, filtered, currentPeriod
           ))}
         </div>
       </div>
+      
+<div style={cardStyle}>
+  <p style={{ fontSize: '11px', fontWeight: 600, color: headerColor, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>Achievement</p>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: statBg, borderRadius: '14px', marginBottom: '12px' }}>
+    <span style={{ fontSize: '36px' }}>{badge.emoji}</span>
+    <div>
+      <p style={{ fontSize: '16px', fontWeight: 700, color: badge.color, marginBottom: '2px' }}>{badge.label}</p>
+      <p style={{ fontSize: '12px', color: textMuted }}>Health score: {healthScore}/100</p>
+    </div>
+  </div>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+    <div style={statBox}>
+      <p style={{ fontSize: '11px', color: textLabel, marginBottom: '6px' }}>🔥 Longest streak</p>
+      <p style={{ fontSize: '18px', fontWeight: 700, color: text }}>{streak} days</p>
+    </div>
+    <div style={statBox}>
+      <p style={{ fontSize: '11px', color: textLabel, marginBottom: '6px' }}>⚡ Active streak</p>
+      <p style={{ fontSize: '18px', fontWeight: 700, color: activeStreak > 0 ? '#34d399' : textMuted }}>{activeStreak} days</p>
+    </div>
+    <div style={{ ...statBox, gridColumn: '1 / -1' }}>
+      <p style={{ fontSize: '11px', color: textLabel, marginBottom: '6px' }}>🏅 Best month</p>
+      <p style={{ fontSize: '18px', fontWeight: 700, color: '#34d399' }}>{bestMonth ? `${bestMonth[0]} (€${bestMonth[1].toFixed(2)})` : '—'}</p>
+    </div>
+  </div>
+</div>
+ <div style={cardStyle}>
+  <p style={{ fontSize: '11px', fontWeight: 600, color: headerColor, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>Data</p>
+  <button onClick={exportCSV} style={{
+    width: '100%', padding: '12px', borderRadius: '12px', cursor: 'pointer',
+    border: `1px solid ${cardBorder}`, background: statBg,
+    color: text, fontSize: '14px', fontWeight: 600, textAlign: 'left'
+  }}>
+    📥 Export transactions as CSV
+  </button>
+</div>
 
     </div>
   )
