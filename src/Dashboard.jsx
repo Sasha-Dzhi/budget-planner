@@ -29,6 +29,7 @@ const PERIODS = [
 ]
 
 const NAV = [
+  { key: 'home', icon: '🏠', label: 'Home' },
   { key: 'dashboard', icon: '📊', label: 'Dashboard' },
   { key: 'transactions', icon: '💸', label: 'Transactions' },
   { key: 'charts', icon: '📈', label: 'Charts' },
@@ -343,7 +344,7 @@ const MiniTrendChart = ({ transactions, c }) => {
 export default function Dashboard({ session, darkMode, toggleDarkMode }) {
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState('dashboard')
+  const [page, setPage] = useState('home')
   const [period, setPeriod] = useState('this_month')
   const [txPage, setTxPage] = useState(1)
   const [showForm, setShowForm] = useState(false)
@@ -362,6 +363,8 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordMsg, setPasswordMsg] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
+  const [monthlyBudget, setMonthlyBudget] = useState('')
+  const [budgetMsg, setBudgetMsg] = useState('')
   const isMobile = useIsMobile()
   const c = getColors(darkMode)
 
@@ -382,7 +385,16 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
     setTransactions(data || [])
     setLoading(false)
   }
-
+  const handleSaveBudget = async () => {
+  await supabase.from('user_settings').upsert({ user_id: session.user.id, monthly_budget: parseFloat(monthlyBudget) })
+  setBudgetMsg('✅ Budget saved!')
+  setTimeout(() => setBudgetMsg(''), 2000)
+}
+const fetchUserSettings = async () => {
+  const { data, error } = await supabase.from('user_settings').select('*').eq('user_id', session.user.id).single()
+  if (data) setMonthlyBudget(parseFloat(data.monthly_budget) || 0)
+}
+useEffect(() => { fetchUserSettings() }, [])
   const addTransaction = async (e) => {
     e.preventDefault()
     const { error } = await supabase.from('transactions').insert({
@@ -827,13 +839,65 @@ const QuickAdd = ({ c, onSave }) => {
             
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-  {page !== 'settings' && page !== 'charts' && page !== 'goals' && <PeriodSelector />}
+  {page !== 'settings' && page !== 'charts' && page !== 'goals' && page !== 'home' && <PeriodSelector />}
   {isMobile && <ThemeToggle />}
 </div>
         </div>
 
         <div style={{ flex: 1, padding: isMobile ? '16px 12px' : '32px', overflowY: 'auto', paddingBottom: isMobile ? '90px' : '32px' }}>
 
+          {page === 'home' && (
+  <div style={{ maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div>
+      <h2 style={{ fontSize: '22px', fontWeight: 700, color: c.text, letterSpacing: '-0.5px' }}>
+        {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}, {session.user.user_metadata?.name || session.user.email.split('@')[0]} 👋
+      </h2>
+      <p style={{ fontSize: '13px', color: c.textMuted, marginTop: '4px' }}>
+        {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+      </p>
+    </div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+      {[
+        { label: 'Balance', value: `€${(transactions.filter(t => t.type === 'income' && new Date(t.date) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1)).reduce((s,t) => s+t.amount,0) - transactions.filter(t => t.type === 'expense' && new Date(t.date) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1)).reduce((s,t) => s+t.amount,0)).toFixed(2)}`, color: c.text },
+        { label: 'Spent today', value: `€${transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === new Date().toDateString()).reduce((s,t) => s+t.amount,0).toFixed(2)}`, color: '#f87171' },
+        { label: 'Budget left today', value: parseFloat(monthlyBudget) > 0 ? `€${Math.max(0, (parseFloat(monthlyBudget) / new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate()) - transactions.filter(t => t.type === 'expense' && t.date === new Date().toISOString().split('T')[0]).reduce((s,t) => s+t.amount,0)).toFixed(2)}` : 'Not set', color: '#4ade80' },
+      ].map(s => (
+        <div key={s.label} style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '16px' }}>
+          <p style={{ fontSize: '11px', color: c.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>{s.label}</p>
+          <p style={{ fontSize: '20px', fontWeight: 700, color: s.color }}>{s.value}</p>
+        </div>
+      ))}
+    </div>
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '20px' }}>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>💡 Daily tip</p>
+      <p style={{ fontSize: '14px', color: c.text, lineHeight: '1.6' }}>
+        {[
+          'The 50/30/20 rule: spend 50% on needs, 30% on wants, and save at least 20% of your income.',
+          'Tracking your spending is the first step to saving more. Just knowing where money goes changes behavior.',
+          'An emergency fund of 3-6 months of expenses gives you financial peace of mind.',
+          'Paying yourself first — saving before spending — is the most reliable way to build wealth.',
+          'Small daily expenses add up. A €5 coffee every day is €1,825 a year.',
+          'Automate your savings so you never have to think about it.',
+          'Review your subscriptions every 3 months — most people pay for things they forgot about.',
+        ][new Date().getDay()]}
+      </p>
+    </div>
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '20px' }}>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Recent transactions</p>
+      {transactions.slice(0, 4).map((t, i) => (
+        <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 3 ? `1px solid ${c.cardBorder}` : 'none' }}>
+          <div>
+            <p style={{ fontSize: '14px', fontWeight: 500, color: c.text }}>{t.category}</p>
+            <p style={{ fontSize: '12px', color: c.textMuted }}>{t.date === new Date().toISOString().split('T')[0] ? 'Today' : 'Yesterday'}</p>
+          </div>
+          <p style={{ fontSize: '14px', fontWeight: 600, color: t.type === 'income' ? '#4ade80' : '#f87171' }}>
+            {t.type === 'income' ? '+' : '-'}€{t.amount.toFixed(2)}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
           {page === 'dashboard' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <StatCards period={period} />
@@ -982,6 +1046,23 @@ const QuickAdd = ({ c, onSave }) => {
         <ThemeToggle />
       </div>
     </div>
+
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
+  <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Monthly Budget</p>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <span style={{ fontSize: '14px', color: c.text }}>€</span>
+    <input
+      type="number" placeholder="e.g. 2000"
+      value={monthlyBudget} onChange={e => setMonthlyBudget(e.target.value)}
+      style={{ flex: 1, padding: '12px', borderRadius: '12px', border: `1px solid ${c.cardBorder}`, background: c.miniStatBg, color: c.text, fontSize: '14px' }}
+    />
+    <button onClick={handleSaveBudget} style={{
+      padding: '12px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+      background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', fontSize: '14px', fontWeight: 600
+    }}>Save</button>
+  </div>
+  {budgetMsg && <p style={{ fontSize: '13px', color: '#4ade80', marginTop: '10px' }}>{budgetMsg}</p>}
+</div>
     <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
       <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Security</p>
       {!showPasswordForm ? (
