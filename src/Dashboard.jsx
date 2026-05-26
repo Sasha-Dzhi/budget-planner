@@ -357,6 +357,11 @@ export default function Dashboard({ session, darkMode, toggleDarkMode }) {
   const [filterFrom, setFilterFrom] = useState('')
   const [filterTo, setFilterTo] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordMsg, setPasswordMsg] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
   const isMobile = useIsMobile()
   const c = getColors(darkMode)
 
@@ -711,6 +716,7 @@ const QuickAdd = ({ c, onSave }) => {
     <div style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
       background: c.bottomNavBg, backdropFilter: 'blur(12px)',
+      
       borderTop: `1px solid ${c.bottomNavBorder}`,
       display: 'flex', padding: '8px 0 max(8px, env(safe-area-inset-bottom))'
     }}>
@@ -945,64 +951,101 @@ const QuickAdd = ({ c, onSave }) => {
   <Goals session={session} c={c} isMobile={isMobile} />
 )}
           {page === 'settings' && (
-            <div style={{ maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
-                <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Account</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                  <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 700, color: '#fff' }}>
-                    {session.user.email[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: c.text }}>{session.user.email}</p>
-                    <p style={{ fontSize: '12px', color: c.textSubtle }}>Free plan</p>
-                  </div>
-                </div>
-                <div style={{ background: c.miniStatBg, borderRadius: '12px', padding: '14px 16px', marginBottom: '12px' }}>
-                  <p style={{ fontSize: '12px', color: c.textMuted, marginBottom: '4px' }}>Email</p>
-                  <p style={{ fontSize: '14px', color: c.text }}>{session.user.email}</p>
-                </div>
-                <div style={{ background: c.miniStatBg, borderRadius: '12px', padding: '14px 16px' }}>
-                  <p style={{ fontSize: '12px', color: c.textMuted, marginBottom: '4px' }}>Member since</p>
-                  <p style={{ fontSize: '14px', color: c.text }}>{new Date(session.user.created_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                </div>
-              </div>
-              <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
-                <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Appearance</p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div>
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: c.text, marginBottom: '2px' }}>Theme</p>
-                    <p style={{ fontSize: '12px', color: c.textSubtle }}>{darkMode ? 'Dark mode' : 'Light mode'}</p>
-                  </div>
-                  <ThemeToggle />
-                </div>
-              </div>
-              <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
-                <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Stats</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  {[
-                    { label: 'Total transactions', value: transactions.length },
-                    { label: 'This period', value: filtered.length },
-                    { label: 'Total income', value: `€${transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0).toFixed(2)}` },
-                    { label: 'Total expenses', value: `€${transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0).toFixed(2)}` },
-                  ].map(s => (
-                    <div key={s.label} style={{ background: c.miniStatBg, borderRadius: '12px', padding: '14px 16px' }}>
-                      <p style={{ fontSize: '11px', color: c.textSubtle, marginBottom: '6px' }}>{s.label}</p>
-                      <p style={{ fontSize: '18px', fontWeight: 700, color: c.text }}>{s.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <button onClick={() => supabase.auth.signOut()} style={{
-                width: '100%', padding: '14px', borderRadius: '14px', cursor: 'pointer',
-                border: '1px solid rgba(248,113,113,0.3)', background: c.logoutBg,
-                color: '#f87171', fontSize: '14px', fontWeight: 600, transition: 'all .15s'
-              }}
-                onMouseOver={e => e.currentTarget.style.background = c.logoutBgHover}
-                onMouseOut={e => e.currentTarget.style.background = c.logoutBg}>
-                Log out
-              </button>
-            </div>
-          )}
+  <div style={{ maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Account</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 700, color: '#fff' }}>
+          {session.user.email[0].toUpperCase()}
+        </div>
+        <div>
+          <p style={{ fontSize: '14px', fontWeight: 600, color: c.text }}>{session.user.email}</p>
+          <p style={{ fontSize: '12px', color: c.textSubtle }}>Free plan</p>
+        </div>
+      </div>
+      <div style={{ background: c.miniStatBg, borderRadius: '12px', padding: '14px 16px', marginBottom: '12px' }}>
+        <p style={{ fontSize: '12px', color: c.textMuted, marginBottom: '4px' }}>Email</p>
+        <p style={{ fontSize: '14px', color: c.text }}>{session.user.email}</p>
+      </div>
+      <div style={{ background: c.miniStatBg, borderRadius: '12px', padding: '14px 16px' }}>
+        <p style={{ fontSize: '12px', color: c.textMuted, marginBottom: '4px' }}>Member since</p>
+        <p style={{ fontSize: '14px', color: c.text }}>{new Date(session.user.created_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      </div>
+    </div>
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Appearance</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <p style={{ fontSize: '14px', fontWeight: 600, color: c.text, marginBottom: '2px' }}>Theme</p>
+          <p style={{ fontSize: '12px', color: c.textSubtle }}>{darkMode ? 'Dark mode' : 'Light mode'}</p>
+        </div>
+        <ThemeToggle />
+      </div>
+    </div>
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px' }}>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Security</p>
+      {!showPasswordForm ? (
+  <button onClick={() => setShowPasswordForm(true)} style={{
+    width: '100%', padding: '12px', borderRadius: '12px', cursor: 'pointer',
+    border: `1px solid ${c.cardBorder}`, background: c.miniStatBg,
+    color: c.text, fontSize: '14px', fontWeight: 600, textAlign: 'left'
+  }}>
+    🔒 Change password
+  </button>
+) : (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+    <input
+      type="password" placeholder="Current password"
+      value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
+      style={{ padding: '12px', borderRadius: '12px', border: `1px solid ${c.cardBorder}`, background: c.miniStatBg, color: c.text, fontSize: '14px' }}
+    />
+    <input
+      type="password" placeholder="New password"
+      value={newPassword} onChange={e => setNewPassword(e.target.value)}
+      style={{ padding: '12px', borderRadius: '12px', border: `1px solid ${c.cardBorder}`, background: c.miniStatBg, color: c.text, fontSize: '14px' }}
+    />
+    <input
+      type="password" placeholder="Confirm new password"
+      value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+      style={{ padding: '12px', borderRadius: '12px', border: `1px solid ${c.cardBorder}`, background: c.miniStatBg, color: c.text, fontSize: '14px' }}
+    />
+    {passwordMsg && <p style={{ fontSize: '13px', color: passwordMsg.includes('✅') ? '#4ade80' : '#f87171' }}>{passwordMsg}</p>}
+    <div style={{ display: 'flex', gap: '8px' }}>
+      <button onClick={async () => {
+  if (!currentPassword) return setPasswordMsg('❌ Enter your current password')
+  if (newPassword !== confirmPassword) return setPasswordMsg('❌ Passwords do not match')
+  if (newPassword.length < 6) return setPasswordMsg('❌ Minimum 6 characters')
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email: session.user.email, password: currentPassword })
+  if (signInError) return setPasswordMsg('❌ Current password is wrong')
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) return setPasswordMsg('❌ ' + error.message)
+  setPasswordMsg('✅ Password updated!')
+  setTimeout(() => { setShowPasswordForm(false); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setPasswordMsg('') }, 2000)
+}} style={{
+        flex: 1, padding: '12px', borderRadius: '12px', cursor: 'pointer',
+        border: 'none', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+        color: '#fff', fontSize: '14px', fontWeight: 600
+      }}>Save</button>
+      <button onClick={() => { setShowPasswordForm(false); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setPasswordMsg(''); }} style={{
+        flex: 1, padding: '12px', borderRadius: '12px', cursor: 'pointer',
+        border: `1px solid ${c.cardBorder}`, background: c.miniStatBg,
+        color: c.text, fontSize: '14px', fontWeight: 600
+      }}>Cancel</button>
+    </div>
+  </div>
+)}
+    </div>
+    <button onClick={() => supabase.auth.signOut()} style={{
+      width: '100%', padding: '14px', borderRadius: '14px', cursor: 'pointer',
+      border: '1px solid rgba(248,113,113,0.3)', background: c.logoutBg,
+      color: '#f87171', fontSize: '14px', fontWeight: 600, transition: 'all .15s'
+    }}
+      onMouseOver={e => e.currentTarget.style.background = c.logoutBgHover}
+      onMouseOut={e => e.currentTarget.style.background = c.logoutBg}>
+      Log out
+    </button>
+  </div>
+)}
         </div>
       </div>
 
