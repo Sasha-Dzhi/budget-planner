@@ -870,28 +870,47 @@ const QuickAdd = ({ c, onSave }) => {
     </div>
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', flex: 1 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '20px', flex: 1 }}>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '20px', minHeight: 0 }}>
           <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>This week spending</p>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '80px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+<div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '120px', overflow: 'hidden', borderBottom: `1px solid ${c.cardBorder}` }}>
             {(() => {
-              const days = ['M','T','W','T','F','S','S']
+              const dayLetters = ['S','M','T','W','T','F','S']
               const today = new Date()
               const weekData = Array.from({length: 7}, (_, i) => {
                 const d = new Date(today)
-                d.setDate(today.getDate() - (6 - i))
+                d.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1) + i)
                 const dayStr = d.toDateString()
                 const total = transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === dayStr).reduce((s,t) => s+t.amount, 0)
-                return { day: days[i], total, isToday: i === 6 }
+                return { day: dayLetters[d.getDay()], total, isToday: d.toDateString() === today.toDateString() }
               })
               const max = Math.max(...weekData.map(d => d.total), 1)
+              const chartHeight = 120
               return weekData.map((d, i) => (
-                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', height: '100%', justifyContent: 'flex-end' }}>
-                  <div style={{ width: '100%', background: d.isToday ? '#f87171' : '#6366f1', borderRadius: '4px 4px 0 0', height: `${Math.max((d.total / max) * 100, 4)}%`, transition: 'height 0.3s' }} />
-                  <span style={{ fontSize: '9px', color: d.isToday ? '#f87171' : c.textMuted, fontWeight: d.isToday ? 700 : 400 }}>{d.day}</span>
-                </div>
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '120px', position: 'relative' }}>
+                  {d.total > 0 && <span style={{ fontSize: '8px', color: d.isToday ? '#f87171' : c.textMuted, marginBottom: '3px', fontWeight: 600 }}>€{Math.round(d.total)}</span>}
+                  <div style={{ width: '100%', background: d.isToday ? '#f87171' : '#6366f1', borderRadius: '4px 4px 0 0', height: `${d.total > 0 ? Math.max((d.total / max) * 120, 6) : 0}px`, transition: 'height 0.3s' }} />
+                  </div>
               ))
             })()}
           </div>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {(() => {
+              const today = new Date()
+              const dayLetters = ['S','M','T','W','T','F','S']
+              return Array.from({length: 7}, (_, i) => {
+                const d = new Date(today)
+                d.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1) + i)
+                const isToday = i === (today.getDay() === 0 ? 6 : today.getDay() - 1)
+                return (
+                  <div key={i} style={{ flex: 1, textAlign: 'center' }}>
+                    <span style={{ fontSize: '9px', color: isToday ? '#f87171' : c.textMuted, fontWeight: isToday ? 700 : 400 }}>{dayLetters[d.getDay()]}</span>
+                  </div>
+                )
+              })
+            })()}
+          </div>
+</div>
         </div>
         <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
           <span style={{ fontSize: '32px' }}>
