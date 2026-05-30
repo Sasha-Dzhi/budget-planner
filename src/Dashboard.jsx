@@ -937,7 +937,7 @@ const QuickAdd = ({ c, onSave }) => {
   const badgeLabel = savingsRate > 50 ? 'Finance Pro' : savingsRate > 20 ? 'On Track' : 'Building Habits'
 
   const WeekChart = () => (
-    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px', boxShadow: c.cardShadow }}>
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px', boxShadow: c.cardShadow, boxSizing: 'border-box', height: '100%' }}>
       <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>This week</p>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '100px', borderBottom: `1px solid ${c.divider}`, marginBottom: '8px' }}>
         {weekData.map((d, i) => (
@@ -1088,7 +1088,7 @@ const QuickAdd = ({ c, onSave }) => {
       <SpendingProgress filtered={homeFiltered} c={c} />
 
       {/* Row 4 — Week chart (left) + Recent (right) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '55% 1fr', gap: '16px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '55% 1fr', gap: '16px' }}>
         <WeekChart />
         <RecentList />
       </div>
