@@ -444,7 +444,8 @@ useEffect(() => { fetchUserSettings() }, [])
   const homeIncome = transactions.filter(t => t.type === 'income' && new Date(t.date) >= thisMonthStart).reduce((s, t) => s + t.amount, 0)
   const homeExpenses = transactions.filter(t => t.type === 'expense' && new Date(t.date) >= thisMonthStart).reduce((s, t) => s + t.amount, 0)
   const homeBalance = homeIncome - homeExpenses
-  const spentToday = transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === now.toDateString()).reduce((s, t) => s + t.amount, 0)
+  const todayStr = new Date().toISOString().split('T')[0]
+  const spentToday = transactions.filter(t => t.type === 'expense' && t.date === todayStr).reduce((s, t) => s + t.amount, 0)
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
   const budgetLeftToday = parseFloat(monthlyBudget) > 0 ? Math.max(0, parseFloat(monthlyBudget) / daysInMonth - spentToday) : null
   const homeFiltered = useMemo(() => transactions.filter(t => new Date(t.date) >= thisMonthStart), [transactions])
@@ -937,17 +938,17 @@ const QuickAdd = ({ c, onSave }) => {
   const badgeLabel = savingsRate > 50 ? 'Finance Pro' : savingsRate > 20 ? 'On Track' : 'Building Habits'
 
   const WeekChart = () => (
-    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px', boxShadow: c.cardShadow, boxSizing: 'border-box', height: '100%' }}>
-      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>This week</p>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '100px', borderBottom: `1px solid ${c.divider}`, marginBottom: '8px' }}>
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px', boxShadow: c.cardShadow, boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', flexShrink: 0 }}>This week</p>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: '6px', borderBottom: `1px solid ${c.divider}`, marginBottom: '8px', minHeight: '60px' }}>
         {weekData.map((d, i) => (
-          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100px' }}>
+          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
             {d.total > 0 && <span style={{ fontSize: '8px', color: d.isToday ? '#f87171' : c.textMuted, marginBottom: '3px', fontWeight: 600 }}>€{Math.round(d.total)}</span>}
-            <div style={{ width: '100%', background: d.isToday ? '#f87171' : (darkMode ? 'rgba(99,102,241,0.6)' : '#6366f1'), borderRadius: '5px 5px 0 0', height: `${d.total > 0 ? Math.max((d.total / weekMax) * 90, 6) : 0}px`, transition: 'height 0.4s ease' }} />
+            <div style={{ width: '100%', background: d.isToday ? '#f87171' : (darkMode ? 'rgba(99,102,241,0.6)' : '#6366f1'), borderRadius: '5px 5px 0 0', height: `${d.total > 0 ? Math.max((d.total / weekMax) * 85, 8) : 0}%`, transition: 'height 0.4s ease' }} />
           </div>
         ))}
       </div>
-      <div style={{ display: 'flex' }}>
+      <div style={{ display: 'flex', flexShrink: 0 }}>
         {weekData.map((d, i) => (
           <div key={i} style={{ flex: 1, textAlign: 'center' }}>
             <span style={{ fontSize: '10px', color: d.isToday ? '#6366f1' : c.textMuted, fontWeight: d.isToday ? 700 : 400 }}>{d.letter}</span>
