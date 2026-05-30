@@ -33,24 +33,24 @@ export default function Auth({ darkMode, toggleDarkMode }) {
     linkColor: '#818cf8',
     gridLine: 'rgba(255,255,255,0.025)',
   } : {
-    bg: '#f0f0f5',
+    bg: '#fafaff',
     title: '#111',
     subtitle: 'rgba(0,0,0,0.4)',
     card: '#fff',
-    cardBorder: 'rgba(0,0,0,0.08)',
+    cardBorder: 'rgba(99,102,241,0.12)',
     inputBg: 'rgba(0,0,0,0.03)',
     inputBorder: 'rgba(0,0,0,0.1)',
     inputText: '#111',
     mutedText: 'rgba(0,0,0,0.35)',
-    toggleBg: 'rgba(0,0,0,0.05)',
-    toggleBorder: 'rgba(0,0,0,0.08)',
-    toggleColor: 'rgba(0,0,0,0.45)',
+    toggleBg: 'rgba(99,102,241,0.07)',
+    toggleBorder: 'rgba(99,102,241,0.15)',
+    toggleColor: 'rgba(99,102,241,0.5)',
     divider: 'rgba(0,0,0,0.08)',
     socialBg: '#fff',
     socialBorder: 'rgba(0,0,0,0.1)',
     socialText: 'rgba(0,0,0,0.65)',
     linkColor: '#6366f1',
-    gridLine: 'transparent',
+    gridLine: 'rgba(99,102,241,0.07)',
   }
 
   const handleSubmit = async (e) => {
@@ -90,12 +90,12 @@ export default function Auth({ darkMode, toggleDarkMode }) {
     <div style={{
       minHeight: '100vh',
       background: c.bg,
-      backgroundImage: d
-        ? `radial-gradient(ellipse 900px 600px at 50% -5%, rgba(99,102,241,0.2), transparent),
-           linear-gradient(${c.gridLine} 1px, transparent 1px),
-           linear-gradient(90deg, ${c.gridLine} 1px, transparent 1px)`
-        : 'none',
-      backgroundSize: d ? 'auto, 44px 44px, 44px 44px' : 'auto',
+      backgroundImage: `
+        radial-gradient(ellipse 900px 600px at 50% -5%, ${d ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.09)'}, transparent),
+        linear-gradient(${c.gridLine} 1px, transparent 1px),
+        linear-gradient(90deg, ${c.gridLine} 1px, transparent 1px)
+      `,
+      backgroundSize: 'auto, 44px 44px, 44px 44px',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '24px', transition: 'background 0.2s',
       fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif',
