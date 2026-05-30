@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from './supabase'
+import { Wallet, Sun, Moon } from 'lucide-react'
 
 export default function Auth({ darkMode, toggleDarkMode }) {
   const [email, setEmail] = useState('')
@@ -83,15 +84,16 @@ export default function Auth({ darkMode, toggleDarkMode }) {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>💰</div>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Wallet size={18} color="white" strokeWidth={2} /></div>
             <span style={{ fontWeight: 700, fontSize: '18px', color: c.title, letterSpacing: '-0.5px' }}>Budget</span>
           </div>
           <button onClick={toggleDarkMode} title="Toggle theme" style={{
             background: c.toggleBg, border: 'none', cursor: 'pointer',
-            borderRadius: '20px', padding: '6px 12px', fontSize: '13px',
+            borderRadius: '20px', padding: '5px 11px', display: 'flex', alignItems: 'center', gap: '5px',
             color: c.toggleColor, transition: 'all 0.2s'
           }}>
-            {darkMode ? '☀️ Light' : '🌙 Dark'}
+            {darkMode ? <Sun size={13} strokeWidth={2} /> : <Moon size={13} strokeWidth={2} />}
+            <span style={{ fontSize: '12px' }}>{darkMode ? 'Light' : 'Dark'}</span>
           </button>
         </div>
 

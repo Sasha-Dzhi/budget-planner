@@ -7,6 +7,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line
 } from 'recharts'
 import Profile from './Profile'
+import {
+  Home, LayoutDashboard, ArrowLeftRight, BarChart2, Target, Settings,
+  Sun, Moon, Wallet, LogOut, Zap, SlidersHorizontal, User, Lock
+} from 'lucide-react'
 
 
 const INCOME_CATEGORIES = ['Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Other']
@@ -29,12 +33,12 @@ const PERIODS = [
 ]
 
 const NAV = [
-  { key: 'home', icon: '🏠', label: 'Home' },
-  { key: 'dashboard', icon: '📊', label: 'Dashboard' },
-  { key: 'transactions', icon: '💸', label: 'Transactions' },
-  { key: 'charts', icon: '📈', label: 'Charts' },
-  { key: 'goals', icon: '🎯', label: 'Goals' },
-  { key: 'settings', icon: '⚙️', label: 'Settings' },
+  { key: 'home', Icon: Home, label: 'Home' },
+  { key: 'dashboard', Icon: LayoutDashboard, label: 'Dashboard' },
+  { key: 'transactions', Icon: ArrowLeftRight, label: 'Transactions' },
+  { key: 'charts', Icon: BarChart2, label: 'Charts' },
+  { key: 'goals', Icon: Target, label: 'Goals' },
+  { key: 'settings', Icon: Settings, label: 'Settings' },
 ]
 
 const PAGES_PER_VIEW = 10
@@ -103,6 +107,7 @@ const getColors = (dark) => dark ? {
   logoutBgHover: 'rgba(248,113,113,0.15)',
   formBg: 'rgba(255,255,255,0.03)',
   formBorder: 'rgba(255,255,255,0.08)',
+  cardShadow: 'none',
 } : {
   appBg: '#f5f5f7',
   sidebarBg: '#fff',
@@ -144,6 +149,7 @@ const getColors = (dark) => dark ? {
   logoutBgHover: 'rgba(248,113,113,0.15)',
   formBg: '#fff',
   formBorder: 'rgba(0,0,0,0.07)',
+  cardShadow: '0 1px 4px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
 }
 
 const relativeDate = (dateStr) => {
@@ -456,10 +462,11 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
   const ThemeToggle = () => (
     <button onClick={toggleDarkMode} title="Toggle theme" style={{
       background: c.toggleBg, border: 'none', cursor: 'pointer', flexShrink: 0,
-      borderRadius: '20px', padding: '6px 12px', fontSize: '12px',
+      borderRadius: '20px', padding: '5px 11px', display: 'flex', alignItems: 'center', gap: '5px',
       color: c.toggleColor, transition: 'all 0.2s', fontWeight: 500
     }}>
-      {darkMode ? '☀️ Light' : '🌙 Dark'}
+      {darkMode ? <Sun size={13} strokeWidth={2} /> : <Moon size={13} strokeWidth={2} />}
+      <span style={{ fontSize: '12px' }}>{darkMode ? 'Light' : 'Dark'}</span>
     </button>
   )
 
@@ -664,7 +671,7 @@ const QuickAdd = ({ c, onSave }) => {
         cursor: 'pointer', display: 'flex', alignItems: 'center',
         justifyContent: 'center', gap: '6px', transition: 'all 0.2s'
       }}>
-        ⚡ Quick add
+        <Zap size={13} strokeWidth={2} /> Quick add
         <span style={{ fontSize: '11px', transition: 'transform 0.3s', display: 'inline-block', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
       </button>
 
@@ -737,18 +744,16 @@ const QuickAdd = ({ c, onSave }) => {
           flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
           background: 'none', border: 'none', cursor: 'pointer', padding: '6px 4px'
         }}>
-          <span style={{ fontSize: '20px', lineHeight: 1 }}>{n.icon}</span>
-          <span style={{ fontSize: '10px', fontWeight: 500, color: page === n.key ? '#818cf8' : c.textNav }}>{n.label}</span>
+          <n.Icon size={22} strokeWidth={1.75} color={page === n.key ? '#6366f1' : c.textNav} />
+          <span style={{ fontSize: '10px', fontWeight: 500, color: page === n.key ? '#6366f1' : c.textNav }}>{n.label}</span>
         </button>
       ))}
       <button onClick={() => navigateTo('profile')} style={{
         flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
         background: 'none', border: 'none', cursor: 'pointer', padding: '6px 4px'
       }}>
-        <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#fff' }}>
-          {session.user.email[0].toUpperCase()}
-        </div>
-        <span style={{ fontSize: '10px', fontWeight: 500, color: page === 'profile' ? '#818cf8' : c.textNav }}>Profile</span>
+        <User size={22} strokeWidth={1.75} color={page === 'profile' ? '#6366f1' : c.textNav} />
+        <span style={{ fontSize: '10px', fontWeight: 500, color: page === 'profile' ? '#6366f1' : c.textNav }}>Profile</span>
       </button>
     </div>
   )
@@ -757,7 +762,7 @@ const QuickAdd = ({ c, onSave }) => {
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '20px' }}>
   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-    <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>💰</div>
+    <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Wallet size={14} color="white" strokeWidth={2} /></div>
     <span style={{ fontWeight: 700, fontSize: '15px', letterSpacing: '-0.3px', color: c.text }}>Budget</span>
   </div>
   <ThemeToggle />
@@ -787,17 +792,19 @@ const QuickAdd = ({ c, onSave }) => {
         }}
           onMouseOver={e => { if (page !== n.key) e.currentTarget.style.background = c.periodBg }}
           onMouseOut={e => { if (page !== n.key) e.currentTarget.style.background = 'transparent' }}>
-          <span style={{ fontSize: '16px', width: '20px', textAlign: 'center' }}>{n.icon}</span>
-          <span style={{ fontSize: '13px', fontWeight: 500, color: page === n.key ? '#818cf8' : c.textNav }}>{n.label}</span>
+          <n.Icon size={16} strokeWidth={1.75} color={page === n.key ? '#6366f1' : c.textNav} />
+          <span style={{ fontSize: '13px', fontWeight: 500, color: page === n.key ? '#6366f1' : c.textNav }}>{n.label}</span>
         </button>
       ))}
       <div style={{ marginTop: 'auto', borderTop: `1px solid ${c.dividerStrong}`, paddingTop: '16px' }}>
   <button onClick={() => supabase.auth.signOut()} style={{
     width: '100%', padding: '8px 10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-    fontSize: '12px', fontWeight: 500, background: c.logoutBg, color: '#f87171', textAlign: 'left', transition: 'all .15s'
+    fontSize: '12px', fontWeight: 500, background: c.logoutBg, color: '#f87171', textAlign: 'left', transition: 'all .15s',
+    display: 'flex', alignItems: 'center', gap: '8px'
   }}
     onMouseOver={e => e.currentTarget.style.background = c.logoutBgHover}
     onMouseOut={e => e.currentTarget.style.background = c.logoutBg}>
+    <LogOut size={13} strokeWidth={2} />
     Log out
   </button>
 </div>
@@ -805,7 +812,7 @@ const QuickAdd = ({ c, onSave }) => {
   )
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: c.appBg, color: c.text, fontFamily: 'system-ui, sans-serif', transition: 'background 0.2s, color 0.2s' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: c.appBg, color: c.text, fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif', transition: 'background 0.2s, color 0.2s' }}>
 
       {!isMobile && (
         <div style={{
@@ -827,7 +834,7 @@ const QuickAdd = ({ c, onSave }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {isMobile && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>💰</div>
+                <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Wallet size={12} color="white" strokeWidth={2} /></div>
                 <span style={{ fontWeight: 700, fontSize: '14px', color: c.text }}>Budget</span>
               </div>
             )}
@@ -862,7 +869,7 @@ const QuickAdd = ({ c, onSave }) => {
         { label: 'Spent today', value: `€${transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === new Date().toDateString()).reduce((s,t) => s+t.amount,0).toFixed(2)}`, color: '#f87171' },
         { label: 'Budget left today', value: parseFloat(monthlyBudget) > 0 ? `€${Math.max(0, (parseFloat(monthlyBudget) / new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate()) - transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === new Date().toDateString()).reduce((s,t) => s+t.amount,0)).toFixed(2)}` : 'Not set', color: '#4ade80' },
       ].map(s => (
-        <div key={s.label} style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '16px 20px' }}>
+        <div key={s.label} style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '18px 22px', boxShadow: c.cardShadow }}>
           <p style={{ fontSize: '11px', color: c.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>{s.label}</p>
           <p style={{ fontSize: '22px', fontWeight: 700, color: s.color }}>{s.value}</p>
         </div>
@@ -870,7 +877,7 @@ const QuickAdd = ({ c, onSave }) => {
     </div>
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', flex: 1 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '20px', minHeight: 0 }}>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px', minHeight: 0, boxShadow: c.cardShadow }}>
           <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>This week spending</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
 <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '120px', overflow: 'hidden', borderBottom: `1px solid ${c.cardBorder}` }}>
@@ -912,7 +919,7 @@ const QuickAdd = ({ c, onSave }) => {
           </div>
 </div>
         </div>
-        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px', boxShadow: c.cardShadow }}>
           <span style={{ fontSize: '32px' }}>
             {transactions.filter(t => t.type === 'income').reduce((s,t) => s+t.amount,0) - transactions.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount,0) > 0 ? '🚀' : '💪'}
           </span>
@@ -937,7 +944,7 @@ const QuickAdd = ({ c, onSave }) => {
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '20px', flex: 1 }}>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px', flex: 1, boxShadow: c.cardShadow }}>
           <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Recent transactions</p>
           {transactions.slice(0, 5).map((t, i) => (
             <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 4 ? `1px solid ${c.cardBorder}` : 'none' }}>
@@ -951,8 +958,8 @@ const QuickAdd = ({ c, onSave }) => {
             </div>
           ))}
         </div>
-        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '16px', padding: '16px 20px' }}>
-          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>💡 Daily tip</p>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '16px 20px', boxShadow: c.cardShadow }}>
+          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Daily tip</p>
           <p style={{ fontSize: '13px', color: c.text, lineHeight: '1.6' }}>
             {['The 50/30/20 rule: spend 50% on needs, 30% on wants, and save at least 20% of your income.','Tracking your spending is the first step to saving more.','An emergency fund of 3-6 months of expenses gives you financial peace of mind.','Paying yourself first — saving before spending — is the most reliable way to build wealth.','Small daily expenses add up. A €5 coffee every day is €1,825 a year.','Automate your savings so you never have to think about it.','Review your subscriptions every 3 months — most people pay for things they forgot about.'][new Date().getDay()]}
           </p>
@@ -1007,7 +1014,7 @@ const QuickAdd = ({ c, onSave }) => {
         color: isFiltered ? '#818cf8' : c.textMuted,
         outline: isFiltered ? '1px solid rgba(99,102,241,0.4)' : 'none'
       }}>
-        {isFiltered ? '🔵 Filters on' : '⚙️ Filter'}
+        <SlidersHorizontal size={12} strokeWidth={2} style={{ display: 'inline', marginRight: '4px' }} />{isFiltered ? 'Active' : 'Filter'}
       </button>
       {isFiltered && (
         <button onClick={() => { setFilterType('all'); setFilterCategories([]); setFilterFrom(''); setFilterTo('') }} style={{
