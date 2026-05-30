@@ -484,14 +484,29 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
   const navigateTo = (p) => { setPage(p); setShowForm(false) }
 
   const ThemeToggle = () => (
-    <button onClick={toggleDarkMode} title="Toggle theme" style={{
-      background: c.toggleBg, border: 'none', cursor: 'pointer', flexShrink: 0,
-      borderRadius: '20px', padding: '5px 11px', display: 'flex', alignItems: 'center', gap: '5px',
-      color: c.toggleColor, transition: 'all 0.2s', fontWeight: 500
+    <button onClick={toggleDarkMode} title={darkMode ? 'Switch to light' : 'Switch to dark'} style={{
+      background: c.toggleBg, border: `1px solid ${c.dividerStrong}`, cursor: 'pointer', flexShrink: 0,
+      borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: c.toggleColor, transition: 'all 0.2s',
     }}>
-      {darkMode ? <Sun size={13} strokeWidth={2} /> : <Moon size={13} strokeWidth={2} />}
-      <span style={{ fontSize: '12px' }}>{darkMode ? 'Light' : 'Dark'}</span>
+      {darkMode ? <Sun size={14} strokeWidth={2} /> : <Moon size={14} strokeWidth={2} />}
     </button>
+  )
+
+  const ToggleSwitch = ({ on }) => (
+    <div style={{
+      width: '36px', height: '20px', borderRadius: '10px', flexShrink: 0,
+      background: on ? '#6366f1' : (darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.12)'),
+      position: 'relative', transition: 'background .25s',
+    }}>
+      <div style={{
+        position: 'absolute', top: '3px',
+        left: on ? '19px' : '3px',
+        width: '14px', height: '14px', borderRadius: '50%',
+        background: '#fff', transition: 'left .25s',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+      }} />
+    </div>
   )
 
   const PeriodSelector = () => (
@@ -778,14 +793,11 @@ const QuickAdd = ({ c, onSave }) => {
   const SidebarContent = () => (
     <>
       {/* Logo row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px', marginBottom: '28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-          <div style={{ width: '30px', height: '30px', borderRadius: '9px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Wallet size={15} color="white" strokeWidth={2} />
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '16px', letterSpacing: '-0.4px', color: c.text }}>Budget</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '9px', padding: '0 4px', marginBottom: '28px' }}>
+        <div style={{ width: '30px', height: '30px', borderRadius: '9px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Wallet size={15} color="white" strokeWidth={2} />
         </div>
-        <ThemeToggle />
+        <span style={{ fontWeight: 700, fontSize: '16px', letterSpacing: '-0.4px', color: c.text }}>Vault</span>
       </div>
 
       {/* Profile card — shows name, email, live balance */}
@@ -832,8 +844,20 @@ const QuickAdd = ({ c, onSave }) => {
         ))}
       </div>
 
-      {/* Bottom — logout */}
+      {/* Bottom — theme + logout */}
       <div style={{ borderTop: `1px solid ${c.dividerStrong}`, paddingTop: '14px', marginTop: '16px' }}>
+        <button onClick={toggleDarkMode} style={{
+          width: '100%', padding: '9px 10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+          fontSize: '13px', fontWeight: 500, background: 'transparent', color: c.textNav,
+          textAlign: 'left', transition: 'background .15s', display: 'flex', alignItems: 'center', gap: '10px',
+          marginBottom: '4px'
+        }}
+          onMouseOver={e => e.currentTarget.style.background = c.periodBg}
+          onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+          {darkMode ? <Sun size={14} strokeWidth={2} /> : <Moon size={14} strokeWidth={2} />}
+          <span style={{ flex: 1 }}>{darkMode ? 'Light mode' : 'Dark mode'}</span>
+          <ToggleSwitch on={darkMode} />
+        </button>
         <button onClick={() => supabase.auth.signOut()} style={{
           width: '100%', padding: '9px 10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
           fontSize: '13px', fontWeight: 500, background: c.logoutBg, color: '#f87171',
@@ -871,7 +895,7 @@ const QuickAdd = ({ c, onSave }) => {
             {isMobile && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Wallet size={12} color="white" strokeWidth={2} /></div>
-                <span style={{ fontWeight: 700, fontSize: '14px', color: c.text }}>Budget</span>
+                <span style={{ fontWeight: 700, fontSize: '14px', color: c.text }}>Vault</span>
               </div>
             )}
            {!isMobile && (
