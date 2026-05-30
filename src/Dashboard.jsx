@@ -425,6 +425,15 @@ useEffect(() => { fetchUserSettings() }, [])
   const totalExpenses = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
   const balance = totalIncome - totalExpenses
 
+  const now = new Date()
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const homeIncome = transactions.filter(t => t.type === 'income' && new Date(t.date) >= thisMonthStart).reduce((s, t) => s + t.amount, 0)
+  const homeExpenses = transactions.filter(t => t.type === 'expense' && new Date(t.date) >= thisMonthStart).reduce((s, t) => s + t.amount, 0)
+  const homeBalance = homeIncome - homeExpenses
+  const spentToday = transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === now.toDateString()).reduce((s, t) => s + t.amount, 0)
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const budgetLeftToday = parseFloat(monthlyBudget) > 0 ? Math.max(0, parseFloat(monthlyBudget) / daysInMonth - spentToday) : null
+
   const expenseByCategory = EXPENSE_CATEGORIES.map(cat => ({
     name: cat, value: filtered.filter(t => t.type === 'expense' && t.category === cat).reduce((s, t) => s + t.amount, 0)
   })).filter(d => d.value > 0)
@@ -471,29 +480,18 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
   )
 
   const PeriodSelector = () => (
-  isMobile ? (
-    <select value={period} onChange={e => setPeriod(e.target.value)} style={{
-      padding: '6px 12px', borderRadius: '10px', border: `1px solid ${c.cardBorder}`,
-      background: c.periodBg, color: c.text, fontSize: '13px', fontWeight: 600,
-      cursor: 'pointer', outline: 'none'
-    }}>
-      {PERIODS.map(p => (
-        <option key={p.key} value={p.key}>{p.label}</option>
-      ))}
-    </select>
-  ) : (
-    <div style={{ display: 'flex', background: c.periodBg, borderRadius: '10px', padding: '3px', gap: '2px' }}>
+    <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px', scrollbarWidth: 'none' }}>
       {PERIODS.map(p => (
         <button key={p.key} onClick={() => setPeriod(p.key)} style={{
-          padding: '5px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-          fontSize: '11px', fontWeight: 600, transition: 'all .15s',
-          background: period === p.key ? c.periodActive : 'transparent',
-          color: period === p.key ? c.periodActiveColor : c.periodColor,
+          padding: '8px 16px', borderRadius: '20px', border: 'none', cursor: 'pointer', flexShrink: 0,
+          fontSize: '13px', fontWeight: 600, transition: 'all .2s',
+          background: period === p.key ? '#6366f1' : c.periodBg,
+          color: period === p.key ? '#fff' : c.periodColor,
+          boxShadow: period === p.key ? '0 2px 8px rgba(99,102,241,0.3)' : 'none',
         }}>{p.label}</button>
       ))}
     </div>
   )
-)
 
   const StatCards = ({ period }) => {
     const lastMonthRange = getPeriodRange('last_month')
@@ -731,30 +729,28 @@ const QuickAdd = ({ c, onSave }) => {
     }}>{showForm ? 'Cancel' : '+ Add Transaction'}</button>
   )
 
+  const MOBILE_NAV = [
+    ...NAV.filter(n => ['home', 'transactions', 'charts', 'goals'].includes(n.key)),
+    { key: 'profile', Icon: User, label: 'You' }
+  ]
+
   const BottomNav = () => (
     <div style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-      background: c.bottomNavBg, backdropFilter: 'blur(12px)',
-      
+      background: c.bottomNavBg, backdropFilter: 'blur(20px)',
       borderTop: `1px solid ${c.bottomNavBorder}`,
-      display: 'flex', padding: '8px 0 max(8px, env(safe-area-inset-bottom))'
+      display: 'flex', padding: `10px 0 max(12px, env(safe-area-inset-bottom))`
     }}>
-      {NAV.map(n => (
+      {MOBILE_NAV.map(n => (
         <button key={n.key} onClick={() => navigateTo(n.key)} style={{
-          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
-          background: 'none', border: 'none', cursor: 'pointer', padding: '6px 4px'
+          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+          background: 'none', border: 'none', cursor: 'pointer', padding: '4px 4px',
+          minHeight: '44px', justifyContent: 'center'
         }}>
-          <n.Icon size={22} strokeWidth={1.75} color={page === n.key ? '#6366f1' : c.textNav} />
-          <span style={{ fontSize: '10px', fontWeight: 500, color: page === n.key ? '#6366f1' : c.textNav }}>{n.label}</span>
+          <n.Icon size={23} strokeWidth={page === n.key ? 2 : 1.6} color={page === n.key ? '#6366f1' : c.textNav} />
+          <span style={{ fontSize: '10px', fontWeight: page === n.key ? 600 : 400, color: page === n.key ? '#6366f1' : c.textNav, letterSpacing: '0.1px' }}>{n.label}</span>
         </button>
       ))}
-      <button onClick={() => navigateTo('profile')} style={{
-        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
-        background: 'none', border: 'none', cursor: 'pointer', padding: '6px 4px'
-      }}>
-        <User size={22} strokeWidth={1.75} color={page === 'profile' ? '#6366f1' : c.textNav} />
-        <span style={{ fontSize: '10px', fontWeight: 500, color: page === 'profile' ? '#6366f1' : c.textNav }}>Profile</span>
-      </button>
     </div>
   )
 
@@ -846,130 +842,182 @@ const QuickAdd = ({ c, onSave }) => {
             
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-  {page !== 'settings' && page !== 'charts' && page !== 'goals' && page !== 'home' && <PeriodSelector />}
   {isMobile && <ThemeToggle />}
 </div>
         </div>
 
-        <div style={{ flex: 1, padding: isMobile ? '16px 12px' : '32px', overflowY: 'auto', paddingBottom: isMobile ? '90px' : '32px' }}>
+        <div style={{ flex: 1, padding: isMobile ? '20px 16px' : '32px', overflowY: 'auto', paddingBottom: isMobile ? '100px' : '32px' }}>
 
-          {page === 'home' && (
-  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-    <div>
-      <h2 style={{ fontSize: '22px', fontWeight: 700, color: c.text, letterSpacing: '-0.5px' }}>
-        {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}, {session.user.user_metadata?.name || session.user.email.split('@')[0]} 👋
-      </h2>
-      <p style={{ fontSize: '13px', color: c.textMuted, marginTop: '4px' }}>
-        {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-      </p>
+          {page === 'home' && (() => {
+  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening'
+  const userName = session.user.user_metadata?.name || session.user.email.split('@')[0]
+  const dateLabel = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  const weekData = (() => {
+    const dayLetters = ['S','M','T','W','T','F','S']
+    return Array.from({length: 7}, (_, i) => {
+      const d = new Date(now)
+      d.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1) + i)
+      const dayStr = d.toDateString()
+      const total = transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === dayStr).reduce((s,t) => s+t.amount, 0)
+      return { letter: dayLetters[d.getDay()], total, isToday: dayStr === now.toDateString() }
+    })
+  })()
+  const weekMax = Math.max(...weekData.map(d => d.total), 1)
+
+  const allIncome = transactions.filter(t => t.type === 'income').reduce((s,t) => s+t.amount,0)
+  const allExpense = transactions.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount,0)
+  const savingsRate = allIncome > 0 ? ((allIncome - allExpense) / allIncome * 100).toFixed(0) : 0
+  const badgeLabel = savingsRate > 50 ? 'Finance Pro' : savingsRate > 20 ? 'On Track' : 'Building Habits'
+
+  const WeekChart = () => (
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px', boxShadow: c.cardShadow }}>
+      <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>This week</p>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '100px', borderBottom: `1px solid ${c.divider}`, marginBottom: '8px' }}>
+        {weekData.map((d, i) => (
+          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100px' }}>
+            {d.total > 0 && <span style={{ fontSize: '8px', color: d.isToday ? '#f87171' : c.textMuted, marginBottom: '3px', fontWeight: 600 }}>€{Math.round(d.total)}</span>}
+            <div style={{ width: '100%', background: d.isToday ? '#f87171' : (darkMode ? 'rgba(99,102,241,0.6)' : '#6366f1'), borderRadius: '5px 5px 0 0', height: `${d.total > 0 ? Math.max((d.total / weekMax) * 90, 6) : 0}px`, transition: 'height 0.4s ease' }} />
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex' }}>
+        {weekData.map((d, i) => (
+          <div key={i} style={{ flex: 1, textAlign: 'center' }}>
+            <span style={{ fontSize: '10px', color: d.isToday ? '#6366f1' : c.textMuted, fontWeight: d.isToday ? 700 : 400 }}>{d.letter}</span>
+          </div>
+        ))}
+      </div>
     </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-      {[
-        { label: 'Balance', value: `€${(transactions.filter(t => t.type === 'income' && new Date(t.date) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1)).reduce((s,t) => s+t.amount,0) - transactions.filter(t => t.type === 'expense' && new Date(t.date) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1)).reduce((s,t) => s+t.amount,0)).toFixed(2)}`, color: c.text },
-        { label: 'Spent today', value: `€${transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === new Date().toDateString()).reduce((s,t) => s+t.amount,0).toFixed(2)}`, color: '#f87171' },
-        { label: 'Budget left today', value: parseFloat(monthlyBudget) > 0 ? `€${Math.max(0, (parseFloat(monthlyBudget) / new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate()) - transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === new Date().toDateString()).reduce((s,t) => s+t.amount,0)).toFixed(2)}` : 'Not set', color: '#4ade80' },
-      ].map(s => (
-        <div key={s.label} style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '18px 22px', boxShadow: c.cardShadow }}>
-          <p style={{ fontSize: '11px', color: c.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>{s.label}</p>
-          <p style={{ fontSize: '22px', fontWeight: 700, color: s.color }}>{s.value}</p>
+  )
+
+  const RecentList = () => (
+    <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', overflow: 'hidden', boxShadow: c.cardShadow }}>
+      <div style={{ padding: '16px 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px' }}>Recent</p>
+        <button onClick={() => navigateTo('transactions')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1', fontSize: '12px', fontWeight: 600 }}>See all →</button>
+      </div>
+      {transactions.slice(0, 5).map((t, i) => (
+        <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: `1px solid ${c.divider}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: t.type === 'income' ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>
+              {CATEGORY_ICONS[t.category] || '📌'}
+            </div>
+            <div>
+              <p style={{ fontSize: '14px', fontWeight: 500, color: c.text }}>{t.category}</p>
+              <p style={{ fontSize: '12px', color: c.textMuted }}>{relativeDate(t.date)}</p>
+            </div>
+          </div>
+          <p style={{ fontSize: '14px', fontWeight: 600, color: t.type === 'income' ? '#34d399' : '#f87171' }}>
+            {t.type === 'income' ? '+' : '-'}€{t.amount.toFixed(2)}
+          </p>
         </div>
       ))}
     </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', flex: 1 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px', minHeight: 0, boxShadow: c.cardShadow }}>
-          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>This week spending</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-<div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '120px', overflow: 'hidden', borderBottom: `1px solid ${c.cardBorder}` }}>
-            {(() => {
-              const dayLetters = ['S','M','T','W','T','F','S']
-              const today = new Date()
-              const weekData = Array.from({length: 7}, (_, i) => {
-                const d = new Date(today)
-                d.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1) + i)
-                const dayStr = d.toDateString()
-                const total = transactions.filter(t => t.type === 'expense' && new Date(t.date).toDateString() === dayStr).reduce((s,t) => s+t.amount, 0)
-                return { day: dayLetters[d.getDay()], total, isToday: d.toDateString() === today.toDateString() }
-              })
-              const max = Math.max(...weekData.map(d => d.total), 1)
-              const chartHeight = 120
-              return weekData.map((d, i) => (
-                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '120px', position: 'relative' }}>
-                  {d.total > 0 && <span style={{ fontSize: '8px', color: d.isToday ? '#f87171' : c.textMuted, marginBottom: '3px', fontWeight: 600 }}>€{Math.round(d.total)}</span>}
-                  <div style={{ width: '100%', background: d.isToday ? '#f87171' : '#6366f1', borderRadius: '4px 4px 0 0', height: `${d.total > 0 ? Math.max((d.total / max) * 120, 6) : 0}px`, transition: 'height 0.3s' }} />
-                  </div>
-              ))
-            })()}
+  )
+
+  if (isMobile) return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div>
+        <h2 style={{ fontSize: '20px', fontWeight: 700, color: c.text, letterSpacing: '-0.3px' }}>{greeting}, {userName}</h2>
+        <p style={{ fontSize: '13px', color: c.textMuted, marginTop: '2px' }}>{dateLabel}</p>
+      </div>
+
+      {/* Hero balance card */}
+      <div style={{ background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)', borderRadius: '24px', padding: '28px 24px', color: '#fff', boxShadow: '0 8px 32px rgba(99,102,241,0.28)' }}>
+        <p style={{ fontSize: '12px', fontWeight: 500, opacity: 0.65, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '8px' }}>This month · Balance</p>
+        <p style={{ fontSize: '44px', fontWeight: 800, letterSpacing: '-2px', lineHeight: 1, marginBottom: '24px' }}>€{homeBalance.toFixed(2)}</p>
+        <div style={{ display: 'flex', borderTop: '1px solid rgba(255,255,255,0.18)', paddingTop: '16px', gap: '16px' }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: '11px', opacity: 0.55, marginBottom: '3px' }}>Income</p>
+            <p style={{ fontSize: '18px', fontWeight: 700 }}>+€{homeIncome.toFixed(2)}</p>
           </div>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {(() => {
-              const today = new Date()
-              const dayLetters = ['S','M','T','W','T','F','S']
-              return Array.from({length: 7}, (_, i) => {
-                const d = new Date(today)
-                d.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1) + i)
-                const isToday = i === (today.getDay() === 0 ? 6 : today.getDay() - 1)
-                return (
-                  <div key={i} style={{ flex: 1, textAlign: 'center' }}>
-                    <span style={{ fontSize: '9px', color: isToday ? '#f87171' : c.textMuted, fontWeight: isToday ? 700 : 400 }}>{dayLetters[d.getDay()]}</span>
-                  </div>
-                )
-              })
-            })()}
-          </div>
-</div>
-        </div>
-        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px', boxShadow: c.cardShadow }}>
-          <span style={{ fontSize: '32px' }}>
-            {transactions.filter(t => t.type === 'income').reduce((s,t) => s+t.amount,0) - transactions.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount,0) > 0 ? '🚀' : '💪'}
-          </span>
-          <div>
-            <p style={{ fontSize: '15px', fontWeight: 700, color: '#6366f1', marginBottom: '2px' }}>
-              {(() => {
-                const income = transactions.filter(t => t.type === 'income').reduce((s,t) => s+t.amount,0)
-                const expense = transactions.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount,0)
-                const rate = income > 0 ? ((income - expense) / income * 100) : 0
-                return rate > 50 ? 'Finance Pro 🏆' : rate > 20 ? 'On Track' : 'Building Habits 💪'
-              })()}
-            </p>
-            <p style={{ fontSize: '12px', color: c.textMuted }}>
-              {(() => {
-                const income = transactions.filter(t => t.type === 'income').reduce((s,t) => s+t.amount,0)
-                const expense = transactions.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount,0)
-                const rate = income > 0 ? ((income - expense) / income * 100).toFixed(0) : 0
-                return `Savings rate ${rate}% · All time`
-              })()}
-            </p>
+          <div style={{ width: '1px', background: 'rgba(255,255,255,0.18)' }} />
+          <div style={{ flex: 1, paddingLeft: '16px' }}>
+            <p style={{ fontSize: '11px', opacity: 0.55, marginBottom: '3px' }}>Spent</p>
+            <p style={{ fontSize: '18px', fontWeight: 700 }}>-€{homeExpenses.toFixed(2)}</p>
           </div>
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px', flex: 1, boxShadow: c.cardShadow }}>
-          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Recent transactions</p>
-          {transactions.slice(0, 5).map((t, i) => (
-            <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 4 ? `1px solid ${c.cardBorder}` : 'none' }}>
-              <div>
-                <p style={{ fontSize: '14px', fontWeight: 500, color: c.text }}>{t.category}</p>
-                <p style={{ fontSize: '12px', color: c.textMuted }}>{new Date(t.date).toDateString() === new Date().toDateString() ? 'Today' : 'Yesterday'}</p>
-              </div>
-              <p style={{ fontSize: '14px', fontWeight: 600, color: t.type === 'income' ? '#4ade80' : '#f87171' }}>
-                {t.type === 'income' ? '+' : '-'}€{t.amount.toFixed(2)}
-              </p>
-            </div>
-          ))}
+
+      {/* Today stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '18px', boxShadow: c.cardShadow }}>
+          <p style={{ fontSize: '11px', color: c.textMuted, marginBottom: '6px', letterSpacing: '0.3px' }}>Spent today</p>
+          <p style={{ fontSize: '24px', fontWeight: 800, color: '#f87171', letterSpacing: '-1px' }}>€{spentToday.toFixed(2)}</p>
         </div>
-        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '16px 20px', boxShadow: c.cardShadow }}>
-          <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Daily tip</p>
-          <p style={{ fontSize: '13px', color: c.text, lineHeight: '1.6' }}>
-            {['The 50/30/20 rule: spend 50% on needs, 30% on wants, and save at least 20% of your income.','Tracking your spending is the first step to saving more.','An emergency fund of 3-6 months of expenses gives you financial peace of mind.','Paying yourself first — saving before spending — is the most reliable way to build wealth.','Small daily expenses add up. A €5 coffee every day is €1,825 a year.','Automate your savings so you never have to think about it.','Review your subscriptions every 3 months — most people pay for things they forgot about.'][new Date().getDay()]}
-          </p>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '18px', boxShadow: c.cardShadow }}>
+          <p style={{ fontSize: '11px', color: c.textMuted, marginBottom: '6px', letterSpacing: '0.3px' }}>Budget left</p>
+          <p style={{ fontSize: '24px', fontWeight: 800, color: '#34d399', letterSpacing: '-1px' }}>{budgetLeftToday !== null ? `€${budgetLeftToday.toFixed(2)}` : '—'}</p>
+        </div>
+      </div>
+
+      <WeekChart />
+      <RecentList />
+
+      {/* Achievement + tip row */}
+      <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '18px 20px', display: 'flex', alignItems: 'center', gap: '14px', boxShadow: c.cardShadow }}>
+        <span style={{ fontSize: '28px', flexShrink: 0 }}>{savingsRate > 50 ? '🚀' : '💪'}</span>
+        <div>
+          <p style={{ fontSize: '14px', fontWeight: 700, color: '#6366f1', marginBottom: '2px' }}>{badgeLabel}</p>
+          <p style={{ fontSize: '12px', color: c.textMuted }}>Savings rate {savingsRate}% · All time</p>
+        </div>
+      </div>
+
+      <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '18px 20px', boxShadow: c.cardShadow }}>
+        <p style={{ fontSize: '11px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Daily tip</p>
+        <p style={{ fontSize: '13px', color: c.text, lineHeight: 1.6 }}>
+          {['The 50/30/20 rule: 50% on needs, 30% on wants, save 20%.','Tracking spending is the first step to saving more.','An emergency fund of 3–6 months gives financial peace of mind.','Pay yourself first — save before you spend.','A €5 coffee every day is €1,825 a year.','Automate your savings so you never have to think about it.','Review subscriptions every 3 months — you probably pay for things you forgot.'][now.getDay()]}
+        </p>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div>
+        <h2 style={{ fontSize: '24px', fontWeight: 700, color: c.text, letterSpacing: '-0.5px' }}>{greeting}, {userName} 👋</h2>
+        <p style={{ fontSize: '13px', color: c.textMuted, marginTop: '4px' }}>{now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+        {[
+          { label: 'Balance', value: `€${homeBalance.toFixed(2)}`, color: homeBalance >= 0 ? c.text : '#f87171' },
+          { label: 'Spent today', value: `€${spentToday.toFixed(2)}`, color: '#f87171' },
+          { label: 'Budget left today', value: budgetLeftToday !== null ? `€${budgetLeftToday.toFixed(2)}` : 'Not set', color: '#34d399' },
+        ].map(s => (
+          <div key={s.label} style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px 22px', boxShadow: c.cardShadow }}>
+            <p style={{ fontSize: '11px', color: c.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>{s.label}</p>
+            <p style={{ fontSize: '24px', fontWeight: 800, color: s.color, letterSpacing: '-1px' }}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <WeekChart />
+          <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '18px 20px', display: 'flex', alignItems: 'center', gap: '14px', boxShadow: c.cardShadow }}>
+            <span style={{ fontSize: '28px', flexShrink: 0 }}>{savingsRate > 50 ? '🚀' : '💪'}</span>
+            <div>
+              <p style={{ fontSize: '14px', fontWeight: 700, color: '#6366f1', marginBottom: '2px' }}>{badgeLabel}</p>
+              <p style={{ fontSize: '12px', color: c.textMuted }}>Savings rate {savingsRate}% · All time</p>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <RecentList />
+          <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '18px 20px', boxShadow: c.cardShadow }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Daily tip</p>
+            <p style={{ fontSize: '13px', color: c.text, lineHeight: 1.6 }}>
+              {['The 50/30/20 rule: 50% on needs, 30% on wants, save 20%.','Tracking spending is the first step to saving more.','An emergency fund of 3–6 months gives financial peace of mind.','Pay yourself first — save before you spend.','A €5 coffee every day is €1,825 a year.','Automate your savings so you never have to think about it.','Review subscriptions every 3 months — you probably pay for things you forgot.'][now.getDay()]}
+            </p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-)}
+  )
+})()}
           {page === 'dashboard' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <PeriodSelector />
               <StatCards period={period} />
               <AddButton />
               <QuickAdd c={c} onSave={fetchTransactions} />
@@ -999,6 +1047,7 @@ const QuickAdd = ({ c, onSave }) => {
 
           {page === 'transactions' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <PeriodSelector />
               <StatCards />
               <AddButton />
               {showForm && <AddForm type={type} setType={setType} amount={amount} setAmount={setAmount} category={category} setCategory={setCategory} categories={categories} description={description} setDescription={setDescription} date={date} setDate={setDate} onSubmit={addTransaction} c={c} darkMode={darkMode} />}
