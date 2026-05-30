@@ -790,7 +790,7 @@ const QuickAdd = ({ c, onSave }) => {
 
       {/* Profile card — shows name, email, live balance */}
       <button onClick={() => navigateTo('profile')} style={{
-        width: '100%', display: 'flex', alignItems: 'center', gap: '11px', padding: '13px 12px',
+        width: '100%', display: 'flex', alignItems: 'flex-start', gap: '11px', padding: '13px 12px',
         borderRadius: '16px', border: 'none', cursor: 'pointer', marginBottom: '28px',
         textAlign: 'left', transition: 'background .15s',
         background: page === 'profile' ? c.navActive : c.statBg,
@@ -799,16 +799,13 @@ const QuickAdd = ({ c, onSave }) => {
         <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '15px', color: '#fff', flexShrink: 0 }}>
           {session.user.email[0].toUpperCase()}
         </div>
-        <div style={{ overflow: 'hidden', flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: '13px', fontWeight: 600, color: page === 'profile' ? '#6366f1' : c.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {session.user.user_metadata?.name || session.user.email.split('@')[0]}
           </p>
-          <p style={{ fontSize: '11px', color: c.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '1px' }}>{session.user.email}</p>
+          <p style={{ fontSize: '11px', color: c.textMuted, marginTop: '1px' }}>{now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
         </div>
-        <div style={{ flexShrink: 0, textAlign: 'right' }}>
-          <p style={{ fontSize: '14px', fontWeight: 700, color: homeBalance >= 0 ? c.text : '#f87171', letterSpacing: '-0.5px' }}>€{homeBalance.toFixed(0)}</p>
-          <p style={{ fontSize: '10px', color: c.textMuted, marginTop: '1px' }}>this month</p>
-        </div>
+        <p style={{ fontSize: '15px', fontWeight: 700, color: homeBalance >= 0 ? '#6366f1' : '#f87171', letterSpacing: '-0.5px', flexShrink: 0 }}>€{homeBalance.toFixed(0)}</p>
       </button>
 
       {/* Grouped navigation */}
@@ -1154,8 +1151,10 @@ const QuickAdd = ({ c, onSave }) => {
 )}
 
           {page === 'profile' && (
-            <div style={{ maxWidth: '560px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <Profile session={session} transactions={transactions} filtered={homeFiltered} currentPeriodLabel="This month" darkMode={darkMode} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Profile session={session} transactions={transactions} filtered={homeFiltered} currentPeriodLabel="This month" darkMode={darkMode} isMobile={isMobile} />
+
+              <p style={{ fontSize: '11px', fontWeight: 600, color: c.textFaint, textTransform: 'uppercase', letterSpacing: '1.5px', padding: '8px 4px 0' }}>Settings</p>
 
               <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '24px', boxShadow: c.cardShadow }}>
                 <p style={{ fontSize: '12px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Appearance</p>
