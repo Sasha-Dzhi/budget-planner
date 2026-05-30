@@ -753,56 +753,84 @@ const QuickAdd = ({ c, onSave }) => {
     </div>
   )
 
+  const NAV_GROUPS = [
+    { label: 'Overview', keys: ['home'] },
+    { label: 'Money', keys: ['transactions', 'charts'] },
+    { label: 'Planning', keys: ['goals'] },
+  ]
+
   const SidebarContent = () => (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '20px' }}>
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-    <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Wallet size={14} color="white" strokeWidth={2} /></div>
-    <span style={{ fontWeight: 700, fontSize: '15px', letterSpacing: '-0.3px', color: c.text }}>Budget</span>
-  </div>
-  <ThemeToggle />
-</div>
+      {/* Logo row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px', marginBottom: '28px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+          <div style={{ width: '30px', height: '30px', borderRadius: '9px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Wallet size={15} color="white" strokeWidth={2} />
+          </div>
+          <span style={{ fontWeight: 700, fontSize: '16px', letterSpacing: '-0.4px', color: c.text }}>Budget</span>
+        </div>
+        <ThemeToggle />
+      </div>
+
+      {/* Profile card — shows name, email, live balance */}
       <button onClick={() => navigateTo('profile')} style={{
-        width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px',
-        borderRadius: '14px', border: 'none', cursor: 'pointer', marginBottom: '20px', transition: 'all .15s', textAlign: 'left',
+        width: '100%', display: 'flex', alignItems: 'center', gap: '11px', padding: '13px 12px',
+        borderRadius: '16px', border: 'none', cursor: 'pointer', marginBottom: '28px',
+        textAlign: 'left', transition: 'background .15s',
         background: page === 'profile' ? c.navActive : c.statBg,
-        outline: page === 'profile' ? `1px solid ${c.periodActiveBorder}` : `1px solid ${c.cardBorder}`
+        outline: page === 'profile' ? `1.5px solid ${c.periodActiveBorder}` : 'none'
       }}>
-        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+        <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '15px', color: '#fff', flexShrink: 0 }}>
           {session.user.email[0].toUpperCase()}
         </div>
-        <div style={{ overflow: 'hidden' }}>
-          <p style={{ fontSize: '13px', fontWeight: 600, color: page === 'profile' ? '#818cf8' : c.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>My Profile</p>
-          <p style={{ fontSize: '11px', color: c.textSubtle, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.email}</p>
+        <div style={{ overflow: 'hidden', flex: 1 }}>
+          <p style={{ fontSize: '13px', fontWeight: 600, color: page === 'profile' ? '#6366f1' : c.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {session.user.user_metadata?.name || session.user.email.split('@')[0]}
+          </p>
+          <p style={{ fontSize: '11px', color: c.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '1px' }}>{session.user.email}</p>
+        </div>
+        <div style={{ flexShrink: 0, textAlign: 'right' }}>
+          <p style={{ fontSize: '14px', fontWeight: 700, color: homeBalance >= 0 ? c.text : '#f87171', letterSpacing: '-0.5px' }}>€{homeBalance.toFixed(0)}</p>
+          <p style={{ fontSize: '10px', color: c.textMuted, marginTop: '1px' }}>this month</p>
         </div>
       </button>
 
-      <p style={{ fontSize: '10px', color: c.textFaint, textTransform: 'uppercase', letterSpacing: '1.5px', padding: '0 8px', marginBottom: '6px' }}>Menu</p>
-      {NAV.map(n => (
-        <button key={n.key} onClick={() => navigateTo(n.key)} style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 10px',
-          borderRadius: '10px', border: 'none', cursor: 'pointer', marginBottom: '2px',
-          transition: 'all .15s', textAlign: 'left',
-          background: page === n.key ? c.navActive : 'transparent',
+      {/* Grouped navigation */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+        {NAV_GROUPS.map((group, gi) => (
+          <div key={group.label} style={{ marginBottom: gi < NAV_GROUPS.length - 1 ? '16px' : 0 }}>
+            <p style={{ fontSize: '10px', fontWeight: 600, color: c.textFaint, textTransform: 'uppercase', letterSpacing: '1.5px', padding: '0 10px', marginBottom: '4px' }}>
+              {group.label}
+            </p>
+            {NAV.filter(n => group.keys.includes(n.key)).map(n => (
+              <button key={n.key} onClick={() => navigateTo(n.key)} style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 10px',
+                borderRadius: '10px', border: 'none', cursor: 'pointer', marginBottom: '1px',
+                transition: 'all .15s', textAlign: 'left',
+                background: page === n.key ? c.navActive : 'transparent',
+              }}
+                onMouseOver={e => { if (page !== n.key) e.currentTarget.style.background = c.periodBg }}
+                onMouseOut={e => { if (page !== n.key) e.currentTarget.style.background = 'transparent' }}>
+                <n.Icon size={16} strokeWidth={page === n.key ? 2.1 : 1.7} color={page === n.key ? '#6366f1' : c.textNav} />
+                <span style={{ fontSize: '13px', fontWeight: page === n.key ? 600 : 500, color: page === n.key ? '#6366f1' : c.textNav }}>{n.label}</span>
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Bottom — logout */}
+      <div style={{ borderTop: `1px solid ${c.dividerStrong}`, paddingTop: '14px', marginTop: '16px' }}>
+        <button onClick={() => supabase.auth.signOut()} style={{
+          width: '100%', padding: '9px 10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+          fontSize: '13px', fontWeight: 500, background: c.logoutBg, color: '#f87171',
+          textAlign: 'left', transition: 'all .15s', display: 'flex', alignItems: 'center', gap: '8px'
         }}
-          onMouseOver={e => { if (page !== n.key) e.currentTarget.style.background = c.periodBg }}
-          onMouseOut={e => { if (page !== n.key) e.currentTarget.style.background = 'transparent' }}>
-          <n.Icon size={16} strokeWidth={1.75} color={page === n.key ? '#6366f1' : c.textNav} />
-          <span style={{ fontSize: '13px', fontWeight: 500, color: page === n.key ? '#6366f1' : c.textNav }}>{n.label}</span>
+          onMouseOver={e => e.currentTarget.style.background = c.logoutBgHover}
+          onMouseOut={e => e.currentTarget.style.background = c.logoutBg}>
+          <LogOut size={14} strokeWidth={2} /> Log out
         </button>
-      ))}
-      <div style={{ marginTop: 'auto', borderTop: `1px solid ${c.dividerStrong}`, paddingTop: '16px' }}>
-  <button onClick={() => supabase.auth.signOut()} style={{
-    width: '100%', padding: '8px 10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-    fontSize: '12px', fontWeight: 500, background: c.logoutBg, color: '#f87171', textAlign: 'left', transition: 'all .15s',
-    display: 'flex', alignItems: 'center', gap: '8px'
-  }}
-    onMouseOver={e => e.currentTarget.style.background = c.logoutBgHover}
-    onMouseOut={e => e.currentTarget.style.background = c.logoutBg}>
-    <LogOut size={13} strokeWidth={2} />
-    Log out
-  </button>
-</div>
+      </div>
     </>
   )
 
@@ -811,9 +839,9 @@ const QuickAdd = ({ c, onSave }) => {
 
       {!isMobile && (
         <div style={{
-          width: '220px', flexShrink: 0, background: c.sidebarBg,
+          width: '248px', flexShrink: 0, background: c.sidebarBg,
           borderRight: `1px solid ${c.sidebarBorder}`, display: 'flex', flexDirection: 'column',
-          padding: '20px 12px', position: 'sticky', top: 0, height: '100vh'
+          padding: '24px 14px', position: 'sticky', top: 0, height: '100vh'
         }}>
           <SidebarContent />
         </div>
@@ -840,9 +868,11 @@ const QuickAdd = ({ c, onSave }) => {
 )}
             
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-  {isMobile && <ThemeToggle />}
-</div>
+          {isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <ThemeToggle />
+            </div>
+          )}
         </div>
 
         <div style={{ flex: 1, padding: isMobile ? '20px 16px' : '32px', overflowY: 'auto', paddingBottom: isMobile ? '100px' : '32px' }}>
