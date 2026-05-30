@@ -964,17 +964,17 @@ const QuickAdd = ({ c, onSave }) => {
         <button onClick={() => navigateTo('transactions')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1', fontSize: '12px', fontWeight: 600 }}>See all →</button>
       </div>
       {transactions.slice(0, 5).map((t, i) => (
-        <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: `1px solid ${c.divider}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: t.type === 'income' ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>
+        <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 20px', borderTop: `1px solid ${c.divider}`, gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: CATEGORY_COLORS[t.category]?.bg || c.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>
               {CATEGORY_ICONS[t.category] || '📌'}
             </div>
-            <div>
-              <p style={{ fontSize: '14px', fontWeight: 500, color: c.text }}>{t.category}</p>
-              <p style={{ fontSize: '12px', color: c.textMuted }}>{relativeDate(t.date)}</p>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: '13px', fontWeight: 500, color: c.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.category}</p>
+              <p style={{ fontSize: '11px', color: c.textMuted }}>{relativeDate(t.date)}</p>
             </div>
           </div>
-          <p style={{ fontSize: '14px', fontWeight: 600, color: t.type === 'income' ? '#34d399' : '#f87171' }}>
+          <p style={{ fontSize: '13px', fontWeight: 700, color: t.type === 'income' ? '#34d399' : '#f87171', flexShrink: 0 }}>
             {t.type === 'income' ? '+' : '-'}€{t.amount.toFixed(2)}
           </p>
         </div>
@@ -1045,48 +1045,61 @@ const QuickAdd = ({ c, onSave }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+      {/* Row 1 — Greeting */}
       <div>
-        <h2 style={{ fontSize: '24px', fontWeight: 700, color: c.text, letterSpacing: '-0.5px' }}>{greeting}, {userName} 👋</h2>
-        <p style={{ fontSize: '13px', color: c.textMuted, marginTop: '4px' }}>{now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <h2 style={{ fontSize: '26px', fontWeight: 800, color: c.text, letterSpacing: '-0.5px', marginBottom: '6px' }}>
+          {greeting}, {userName.split(' ')[0]} 👋
+        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <p style={{ fontSize: '13px', color: c.textMuted }}>
+            {now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '4px 12px', borderRadius: '20px',
+            fontSize: '12px', fontWeight: 600,
+            background: savingsRate > 50 ? 'rgba(245,158,11,0.12)' : 'rgba(99,102,241,0.1)',
+            color: savingsRate > 50 ? '#f59e0b' : '#6366f1',
+            border: `1px solid ${savingsRate > 50 ? 'rgba(245,158,11,0.25)' : 'rgba(99,102,241,0.2)'}`,
+          }}>
+            {savingsRate > 50 ? '🚀' : '💪'} {badgeLabel} · {savingsRate}%
+          </span>
+        </div>
       </div>
+
+      {/* Row 2 — 3 colour-coded stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-        {[
-          { label: 'Balance', value: `€${homeBalance.toFixed(2)}`, color: homeBalance >= 0 ? c.text : '#f87171' },
-          { label: 'Spent today', value: `€${spentToday.toFixed(2)}`, color: '#f87171' },
-          { label: 'Budget left today', value: budgetLeftToday !== null ? `€${budgetLeftToday.toFixed(2)}` : 'Not set', color: '#34d399' },
-        ].map(s => (
-          <div key={s.label} style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '20px 22px', boxShadow: c.cardShadow }}>
-            <p style={{ fontSize: '11px', color: c.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>{s.label}</p>
-            <p style={{ fontSize: '24px', fontWeight: 800, color: s.color, letterSpacing: '-1px' }}>{s.value}</p>
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <WeekChart />
-          <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '18px 20px', display: 'flex', alignItems: 'center', gap: '14px', boxShadow: c.cardShadow }}>
-            <span style={{ fontSize: '28px', flexShrink: 0 }}>{savingsRate > 50 ? '🚀' : '💪'}</span>
-            <div>
-              <p style={{ fontSize: '14px', fontWeight: 700, color: '#6366f1', marginBottom: '2px' }}>{badgeLabel}</p>
-              <p style={{ fontSize: '12px', color: c.textMuted }}>Savings rate {savingsRate}% · All time</p>
-            </div>
-          </div>
+        <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '22px 24px', boxShadow: c.cardShadow }}>
+          <p style={{ fontSize: '12px', color: c.textMuted, marginBottom: '10px', fontWeight: 500 }}>Balance</p>
+          <p style={{ fontSize: '28px', fontWeight: 800, color: homeBalance >= 0 ? c.text : '#f87171', letterSpacing: '-1.5px' }}>€{homeBalance.toFixed(2)}</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <RecentList />
-          <div style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: '20px', padding: '18px 20px', boxShadow: c.cardShadow }}>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: c.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Daily tip</p>
-            <p style={{ fontSize: '13px', color: c.text, lineHeight: 1.6 }}>
-              {['The 50/30/20 rule: 50% on needs, 30% on wants, save 20%.','Tracking spending is the first step to saving more.','An emergency fund of 3–6 months gives financial peace of mind.','Pay yourself first — save before you spend.','A €5 coffee every day is €1,825 a year.','Automate your savings so you never have to think about it.','Review subscriptions every 3 months — you probably pay for things you forgot.'][now.getDay()]}
-            </p>
-          </div>
+        <div style={{ background: 'rgba(248,113,113,0.07)', border: '1px solid rgba(248,113,113,0.18)', borderRadius: '20px', padding: '22px 24px', boxShadow: c.cardShadow }}>
+          <p style={{ fontSize: '12px', color: 'rgba(248,113,113,0.75)', marginBottom: '10px', fontWeight: 500 }}>Spent today</p>
+          <p style={{ fontSize: '28px', fontWeight: 800, color: '#f87171', letterSpacing: '-1.5px' }}>€{spentToday.toFixed(2)}</p>
+        </div>
+        <div style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.18)', borderRadius: '20px', padding: '22px 24px', boxShadow: c.cardShadow }}>
+          <p style={{ fontSize: '12px', color: 'rgba(52,211,153,0.8)', marginBottom: '10px', fontWeight: 500 }}>Budget left</p>
+          <p style={{ fontSize: '28px', fontWeight: 800, color: '#34d399', letterSpacing: '-1.5px' }}>{budgetLeftToday !== null ? `€${budgetLeftToday.toFixed(2)}` : '—'}</p>
         </div>
       </div>
+
+      {/* Row 3 — Spending progress */}
       <SpendingProgress filtered={homeFiltered} c={c} />
-      <div style={{ display: 'flex', gap: '16px' }}>
+
+      {/* Row 4 — Week chart (left) + Recent (right) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '55% 1fr', gap: '16px', alignItems: 'start' }}>
+        <WeekChart />
+        <RecentList />
+      </div>
+
+      {/* Row 5 — Top spending + income */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <TopSpending filtered={homeFiltered} c={c} />
         <TopIncome filtered={homeFiltered} c={c} />
       </div>
+
+      {/* Row 6 — Goals */}
       <GoalsSummary c={c} session={session} navigateTo={navigateTo} />
     </div>
   )
