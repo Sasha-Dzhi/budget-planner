@@ -24,6 +24,22 @@ const CATEGORY_ICONS = {
 
 const COLORS = ['#818cf8', '#a78bfa', '#f472b6', '#fbbf24', '#34d399', '#60a5fa', '#f87171', '#2dd4bf']
 
+const CATEGORY_COLORS = {
+  Salary:        { bg: 'rgba(52,211,153,0.14)',  dot: '#34d399' },
+  Freelance:     { bg: 'rgba(52,211,153,0.14)',  dot: '#34d399' },
+  Business:      { bg: 'rgba(99,102,241,0.14)',  dot: '#818cf8' },
+  Investment:    { bg: 'rgba(251,191,36,0.14)',  dot: '#fbbf24' },
+  Gift:          { bg: 'rgba(244,114,182,0.14)', dot: '#f472b6' },
+  Food:          { bg: 'rgba(251,146,60,0.14)',  dot: '#fb923c' },
+  Transport:     { bg: 'rgba(96,165,250,0.14)',  dot: '#60a5fa' },
+  Housing:       { bg: 'rgba(167,139,250,0.14)', dot: '#a78bfa' },
+  Entertainment: { bg: 'rgba(244,114,182,0.14)', dot: '#f472b6' },
+  Health:        { bg: 'rgba(248,113,113,0.14)', dot: '#f87171' },
+  Shopping:      { bg: 'rgba(251,191,36,0.14)',  dot: '#fbbf24' },
+  Education:     { bg: 'rgba(45,212,191,0.14)',  dot: '#2dd4bf' },
+  Other:         { bg: 'rgba(148,163,184,0.14)', dot: '#94a3b8' },
+}
+
 const PERIODS = [
   { key: 'this_month', label: 'This month' },
   { key: 'last_month', label: 'Last month' },
@@ -546,7 +562,7 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
       onMouseOver={e => e.currentTarget.style.background = c.rowHover}
       onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-        <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: c.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>
+        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: CATEGORY_COLORS[t.category]?.bg || c.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>
           {CATEGORY_ICONS[t.category] || '📌'}
         </div>
         <div style={{ minWidth: 0 }}>
@@ -581,7 +597,7 @@ const paginatedTx = txFiltered.slice((txPage - 1) * PAGES_PER_VIEW, txPage * PAG
   return totalTxPages > 1 ? (
     <div id="pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderTop: `1px solid ${c.dividerStrong}`, flexWrap: 'wrap', gap: '8px' }}>
       <p style={{ fontSize: '11px', color: c.textFaint }}>
-        {((txPage - 1) * PAGES_PER_VIEW) + 1}–{Math.min(txPage * PAGES_PER_VIEW, filtered.length)} of {filtered.length}
+        {((txPage - 1) * PAGES_PER_VIEW) + 1}–{Math.min(txPage * PAGES_PER_VIEW, txFiltered.length)} of {txFiltered.length}
       </p>
       <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
         <button onClick={() => changePage(Math.max(1, txPage - 1))} disabled={txPage === 1} style={{
@@ -875,7 +891,7 @@ const QuickAdd = ({ c, onSave }) => {
           )}
         </div>
 
-        <div style={{ flex: 1, padding: isMobile ? '20px 16px' : '32px', overflowY: 'auto', paddingBottom: isMobile ? '100px' : '32px' }}>
+        <div key={page} className="page-enter" style={{ flex: 1, padding: isMobile ? '20px 16px' : '32px', overflowY: 'auto', paddingBottom: isMobile ? '100px' : '32px' }}>
 
           {page === 'home' && (() => {
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening'

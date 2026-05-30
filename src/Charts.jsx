@@ -132,8 +132,8 @@ export default function Charts({ transactions, filtered, c, isMobile }) {
   )
 
   return (
-    <div style={{ padding: isMobile ? '16px' : '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <h1 style={{ fontSize: '24px', fontWeight: 700, color: c.text, marginBottom: '4px' }}>Charts</h1>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <h1 style={{ fontSize: '24px', fontWeight: 700, color: c.text, marginBottom: '4px' }}>Insights</h1>
 
       {/* SECTION 1 — OVERVIEW */}
       <SectionDivider label="Overview" tag="All time" tagColor="#818cf8" tagBg="rgba(99,102,241,0.1)" />

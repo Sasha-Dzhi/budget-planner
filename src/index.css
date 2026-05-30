@@ -11,3 +11,11 @@ body {
 input, select, button, textarea {
   font-family: inherit;
 }
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: pageIn 0.22s ease-out both;
+}
