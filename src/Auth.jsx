@@ -89,13 +89,9 @@ export default function Auth({ darkMode, toggleDarkMode }) {
   return (
     <div style={{
       minHeight: '100vh',
-      background: c.bg,
-      backgroundImage: `
-        radial-gradient(ellipse 900px 600px at 50% -5%, ${d ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.09)'}, transparent),
-        linear-gradient(${c.gridLine} 1px, transparent 1px),
-        linear-gradient(90deg, ${c.gridLine} 1px, transparent 1px)
-      `,
-      backgroundSize: 'auto, 44px 44px, 44px 44px',
+      backgroundColor: c.bg,
+      backgroundImage: `radial-gradient(ellipse 900px 600px at 50% -5%, ${d ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.09)'}, transparent), linear-gradient(${c.gridLine} 1px, transparent 1px), linear-gradient(90deg, ${c.gridLine} 1px, transparent 1px)`,
+      backgroundSize: 'auto auto, 44px 44px, 44px 44px',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '24px', transition: 'background 0.2s',
       fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif',
